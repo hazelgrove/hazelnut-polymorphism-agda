@@ -449,10 +449,10 @@ module core where
                   Δ , Θ , (Γ ,, (y , τ)) ⊢ TypId Θ' , σ :s: Θ' , Γ' →
                   Δ , Θ , Γ ⊢ d :: τ →
                   Δ , Θ , Γ ⊢ TypId Θ' , Subst d y σ :s: Θ' , Γ'
-      STASubst : ∀{Θ Θ' Γ Δ θ σ y Γ' τ } →
-               Δ , (Θ ,, (y , <>)) , Γ ⊢ θ , σ :s: Θ' , Γ' →
+      STASubst : ∀{Θ Θ' Γ Δ θ σ t Γ' τ } →
+               Δ , (Θ ,, (t , <>)) , Γ ⊢ θ , σ :s: Θ' , Γ' →
                Θ ⊢ τ wf →
-               Δ , Θ , Γ ⊢ TypSubst τ y θ , σ :s: Θ' , Γ'
+               (Hctx[ τ / t ] Δ) , Θ , (Tctx[ τ / t ] Γ) ⊢ TypSubst τ t θ , (Sub[ τ / t ] σ) :s: Θ' , (Tctx[ τ / t ] Γ')
 
     -- type assignment
     data _,_,_⊢_::_ : (Δ : hctx) (Θ : typctx) (Γ : tctx) (d : ihexp) (τ : htyp) → Set where
@@ -706,12 +706,17 @@ module core where
     data tunbound-in-Γ : Nat → tctx → Set where
       UBTΓ : ∀{x Γ} → ((x' : Nat) (y : htyp) → ((x' , y) ∈ Γ) → tfresht x y) → tunbound-in-Γ x Γ
     
-    data envtfresh : Nat → env → Set where
-      ETFId : ∀{x Γ} → tunbound-in-Γ x Γ → envtfresh x (Id Γ)
-      ETFSubst : ∀{x d σ y} → tfresh x d
-                           → envtfresh x σ
-                           → x ≠ y
-                           → envtfresh x (Subst d y σ)
+    data tenvfresh : Nat → env → Set where
+      ETFId : ∀{t Γ} → tunbound-in-Γ t Γ → tenvfresh t (Id Γ)
+      ETFSubst : ∀{t d σ y} → tfresh t d
+                           → tenvfresh t σ
+                           → tenvfresh t (Subst d y σ)
+    
+    data tenvtfresh : Nat → typenv → Set where
+      ETFId : ∀{t Θ} → t # Θ → tenvtfresh t (TypId Θ)
+      ETFSubst : ∀{t τ t' θ} → tfresht t τ
+                           → tenvtfresh t θ
+                           → tenvtfresh t (TypSubst τ t' θ)
 
     -- ... for internal expressions
     data fresh : Nat → ihexp → Set where
@@ -739,8 +744,8 @@ module core where
       TFVar   : ∀{x y} → tfresh x (X y)
       TFLam   : ∀{x y τ d} → tfresht x τ → tfresh x d →  tfresh x (·λ y [ τ ] d)
       TFTLam  : ∀{x t d} → x ≠ t → tfresh x d → tfresh x (·Λ t d)
-      TFHole  : ∀{x u θ σ} → envtfresh x σ → tfresh x (⦇-⦈⟨ u , θ , σ ⟩)
-      TFNEHole : ∀{x d u θ σ} → envtfresh x σ → tfresh x d → tfresh x (⦇⌜ d ⌟⦈⟨ u , θ , σ ⟩)
+      TFHole  : ∀{t u θ σ} → tenvtfresh t θ → tenvfresh t σ → tfresh t (⦇-⦈⟨ u , θ , σ ⟩)
+      TFNEHole : ∀{t d u θ σ} → tenvtfresh t θ → tenvfresh t σ → tfresh t d → tfresh t (⦇⌜ d ⌟⦈⟨ u , θ , σ ⟩)
       TFAp     : ∀{x d1 d2} → tfresh x d1 → tfresh x d2 → tfresh x (d1 ∘ d2)
       TFTAp    : ∀{x τ d} → tfresht x τ → tfresh x d → tfresh x (d < τ >)
       TFCast   : ∀{x d τ1 τ2} → tfresh x d → tfresh x (d ⟨ τ1 ⇒ τ2 ⟩)
@@ -771,7 +776,7 @@ module core where
                             → unbound-in-σ x (Subst d y σ)
   
     data tunbound-in-θ : Nat → typenv → Set where
-      UBθId : ∀{t Γ} → tunbound-in-θ t (TypId Γ)
+      UBθId : ∀{t Θ} → tunbound-in-θ t (TypId Θ)
       UBθSubst : ∀{t τ y θ} → tunboundt-in t τ
                             → tunbound-in-θ t θ
                             → t ≠ y
@@ -801,8 +806,9 @@ module core where
     data tunbound-in : (t : Nat) → (d : ihexp) → Set where
       TUBConst : ∀{t} → tunbound-in t c
       TUBVar : ∀{t y} → tunbound-in t (X y)
-      TUBLam2 : ∀{t d y τ} → tunbound-in t d
-                           → tunbound-in t (·λ_[_]_ y τ d)
+      TUBLam : ∀{t d y τ} → tunbound-in t d
+                          → tunboundt-in t τ
+                          → tunbound-in t (·λ_[_]_ y τ d)
       TUBTLam : ∀{t t' τ} → t ≠ t' → tunbound-in t τ → tunbound-in t (·Λ t τ)
       TUBHole : ∀{t u θ σ} → tunbound-in-θ t θ
                          → tunbound-in t (⦇-⦈⟨ u , θ , σ ⟩)

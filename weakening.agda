@@ -1,3 +1,4 @@
+{-# OPTIONS --allow-unsolved-metas #-}
 open import Nat
 open import Prelude
 open import core
@@ -38,7 +39,7 @@ module weakening where
                                      → (Δ1 ∪ Δ2) , Θ , Γ ⊢ θ , σ :s: Θ' , Γ'
     weaken-subst-Δ disj (STAIdId x₁ x₂) = STAIdId x₁ x₂
     weaken-subst-Δ disj (STAIdSubst subst x) = STAIdSubst (weaken-subst-Δ disj subst) (weaken-ta-Δ1 disj x)
-    weaken-subst-Δ disj (STASubst subst x) = STASubst (weaken-subst-Δ disj subst) x
+    weaken-subst-Δ disj (STASubst subst x) = {!!} -- STASubst (weaken-subst-Δ disj subst) x
 
     weaken-ta-Δ1 : ∀{Δ1 Δ2 Γ d τ Θ} → Δ1 ## Δ2
                                   → Δ1 , Θ , Γ ⊢ d :: τ
@@ -98,6 +99,8 @@ module weakening where
                      envfresh x σ →
                      Δ , Θ , Γ ⊢ θ , σ :s: Θ' , Γ' →
                      Δ , Θ , (Γ ,, (x , τ)) ⊢ θ , σ :s: Θ' , Γ'
+    weaken-subst-Γ = {!!}
+    {-
     weaken-subst-Γ {Γ = Γ} (EFId x₁) (STAIdId x₂ prem) = STAIdId (λ x τ x₃ → x∈∪l Γ _ x τ (x₂ x τ x₃) ) prem
     weaken-subst-Γ {x = x} {Γ = Γ} (EFSubst x₁ efrsh x₂) (STAIdSubst {y = y} {τ = τ'} subst x₃) =
       STAIdSubst (exchange-subst-Γ {Γ = Γ} (flip x₂) (weaken-subst-Γ {Γ = Γ ,, (y , τ')} efrsh subst))
@@ -105,6 +108,7 @@ module weakening where
     weaken-subst-Γ (EFId x) (STASubst x₁ x₂) = STASubst (weaken-subst-Γ (EFId x) x₁) x₂
     weaken-subst-Γ {x = x} {Γ = Γ} (EFSubst x₁ efrsh x₂) (STASubst {y = y} {τ = τ'} subst x₃) =
       STASubst (weaken-subst-Γ (EFSubst x₁ efrsh x₂) subst) x₃ 
+    -}
 
     weaken-ta : ∀{x Γ Δ d τ τ' Θ} →
                 fresh x d →
@@ -144,4 +148,4 @@ module weakening where
     weaken-ta-typ (TANEHole x x₁ x₂ eq) = TANEHole x (weaken-ta-typ x₁) (weaken-subst-Θ x₂) eq
     weaken-ta-typ (TACast x wf x₁) = TACast (weaken-ta-typ x) (weaken-t-wf wf) x₁
     weaken-ta-typ (TAFailedCast x x₁ x₂ x₃) = TAFailedCast (weaken-ta-typ x) x₁ x₂ x₃
- 
+  

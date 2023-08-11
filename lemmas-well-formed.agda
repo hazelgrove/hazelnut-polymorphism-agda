@@ -247,10 +247,10 @@ module lemmas-well-formed where
       typenv-wf hctxwf ctxwf3 sub ctxwf2 wf eq 
       where 
       ctxwf3 = merge-tctx-wf ctxwf1 (wf-ta ctxwf1 hctxwf x)
-    typenv-wf {Θ = Θ} {θ = θ} {τ = τ} hctxwf ctxwf1 (STASubst {y = y} sub x) ctxwf2 wf eq =
+    typenv-wf {Θ = Θ} {θ = θ} {τ = τ} hctxwf ctxwf1 (STASubst {t = t} sub x) ctxwf2 wf eq =
       typsub-wf wf2 x eq
       where 
-      wf2 = typenv-wf hctxwf (weaken-tctx-wf ctxwf1) sub ctxwf2 wf refl
+      wf2 = typenv-wf hctxwf (weaken-tctx-wf ctxwf1) {! sub !} ctxwf2 wf refl
 
     wf-ta : ∀{Θ Γ d τ Δ} → 
             Θ ⊢ Γ tctxwf → 
