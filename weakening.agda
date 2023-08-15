@@ -32,14 +32,14 @@ module weakening where
       (let (p1 , p2) = (map key) in 
       (weaken-tctx-wf p1) , (weaken-t-wf p2)))
 -}
-
+{-
   mutual
     weaken-subst-Δ : ∀{Δ1 Δ2 Γ θ σ Γ' Θ Θ'} → Δ1 ## Δ2
                                      → Δ1 , Θ , Γ ⊢ θ , σ :s: Θ' , Γ'
                                      → (Δ1 ∪ Δ2) , Θ , Γ ⊢ θ , σ :s: Θ' , Γ'
     weaken-subst-Δ disj (STAIdId x₁ x₂) = STAIdId x₁ x₂
     weaken-subst-Δ disj (STAIdSubst subst x) = STAIdSubst (weaken-subst-Δ disj subst) (weaken-ta-Δ1 disj x)
-    weaken-subst-Δ disj (STASubst subst x) = {!!} -- STASubst (weaken-subst-Δ disj subst) x
+    weaken-subst-Δ disj (STASubst subst x) = {! !} -- STASubst (weaken-subst-Δ disj subst) x
 
     weaken-ta-Δ1 : ∀{Δ1 Δ2 Γ d τ Θ} → Δ1 ## Δ2
                                   → Δ1 , Θ , Γ ⊢ d :: τ
@@ -62,7 +62,7 @@ module weakening where
                                 → Δ2 , Θ , Γ ⊢ d :: τ
                                 → (Δ1 ∪ Δ2) , Θ , Γ ⊢ d :: τ
   weaken-ta-Δ2 {Δ1} {Δ2} {Γ} {d} {τ} {Θ} disj D = tr (λ q → q , Θ , Γ ⊢ d :: τ) (∪comm Δ2 Δ1 (##-comm disj)) (weaken-ta-Δ1 (##-comm disj) D)
-
+-}
 
   -- note that these statements are somewhat stronger than usual. this is
   -- because we don't have implcit α-conversion. this reifies the

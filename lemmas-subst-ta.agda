@@ -20,7 +20,7 @@ module lemmas-subst-ta where
                                                                                     EFSubst (binders-fresh {y = y} x₁ zz x₂ apt)
                                                                                             (binders-envfresh subst (apart-extend1 Γ neq apt) unbound x₃)
                                                                                             neq
-    binders-envfresh {Γ = Γ} {y = y} (STASubst subst wf) apt ub bu = binders-envfresh subst apt ub bu
+    binders-envfresh {Γ = Γ} {y = y} (STASubst subst wf) apt ub bu = binders-envfresh {! subst !} apt ub bu
     {-
     binders-envtfresh : ∀{Δ Γ Γ' y σ Θ} → Δ , Θ , Γ ⊢ σ :s: Γ' → y # Θ → unbound-in-σ y σ → binders-unique-σ σ → unboundt-in-Γ y Γ -> envtfresh y σ
     binders-envtfresh {Γ' = Γ'} {y = y} {Θ = Θ} (STAId x) apt ub bu (UBTΓ ubtg) = ETFId (UBTΓ \k v inc ->  ubtg k v (x k v inc))

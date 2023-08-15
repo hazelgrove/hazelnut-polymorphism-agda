@@ -120,14 +120,14 @@ module lemmas-tysubst-ta where
                      {!!} -- This one should be true if I have tfresht t tau1, which should be true if t # Theta or just by direct assumption
     ... | Inr neq rewrite natEQneq neq = TATAp {t = t'} {τ2 = Typ[ τ2 / t ] τ4} (wf-sub wf x refl)
                     (rewrite-typ (forall-sub-neq neq) (lemma-tysubst wf ubtg ctxwf {!   !} tbu ta)) {!!}
-    lemma-tysubst {Δ = Δ} {t = t} {τ1 = τ1} {τ2 = tau} wf _ ctxwf _ _ (TAEHole {σ = Id Γ} x x' eq) = TAEHole ((lem-map-preserve-elem {Γ = Δ} x)) {!!} {!!}
+    lemma-tysubst {Δ = Δ} {t = t} {τ1 = τ1} {τ2 = tau} wf _ ctxwf _ _ (TAEHole {σ = Id Γ} x x' eq) rewrite eq = TAEHole ((lem-map-preserve-elem {Γ = Δ} x)) (STASubst x' wf) refl
     lemma-tysubst {Δ = Δ} {Θ = Θ} wf ubig ctxwf tbd tbu (TAEHole {σ = Subst d y σ} x ts eq) rewrite eq = 
-        TAEHole {!   !} (STASubst {!   !} {!   !}) {!   !}
+        TAEHole (lem-map-preserve-elem {Γ = Δ} x) (STASubst ts wf) refl
 --      TAEHole ((lem-map-preserve-elem {Γ = Δ} x))
 --        (lemma-tysubst-subst {!   !} {!   !} {!   !} {!   !} {!!} ts) refl -- wf ubig {!!} ctxwf {!!}) refl -- (STASubst (rewrite-theta-subst (! (typctx-contraction {Θ = Θ})) ts) (weaken-t-wf wf))) refl
     lemma-tysubst {Δ = Δ} {Θ = Θ} wf ubig ctxwf tbd tbu (TANEHole x ta ts eq) rewrite eq =
       TANEHole (lem-map-preserve-elem {Γ = Δ} x) 
-        (lemma-tysubst {!   !} {!   !} {!   !} {!   !} {!   !} ta)
+        (lemma-tysubst wf ubig ctxwf {!   !} tbu ta)
         (STASubst ts wf) refl -- (lemma-tysubst-subst wf ubig {!!} {!!} ctxwf ts) refl -- (STASubst (rewrite-theta-subst (! (typctx-contraction {Θ = Θ})) ts) (weaken-t-wf wf))) refl
     lemma-tysubst wf ubig ctxwf tbd tbu (TACast ta x x~) = TACast (lemma-tysubst wf ubig ctxwf {!   !} {!   !} ta) (wf-sub wf x refl) {! (~Typ[] x~) !}
     lemma-tysubst wf ubig ctxwf tbd tbu (TAFailedCast ta tgnd tgnd' x) = TAFailedCast (lemma-tysubst wf ubig ctxwf {!   !} tbu ta) (ground-subst tgnd) (ground-subst tgnd') 
