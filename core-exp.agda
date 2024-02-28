@@ -1,8 +1,8 @@
 open import Prelude
 open import Nat
-open import debruijn.debruijn-core-type
+open import core-type
 
-module debruijn.debruijn-core-exp where
+module core-exp where
 
   -- external expressions
   data hexp : Set where

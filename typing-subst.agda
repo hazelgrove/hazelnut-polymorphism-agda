@@ -2,19 +2,19 @@
 
 open import Nat
 open import Prelude
-open import debruijn.debruijn-core-type
-open import debruijn.debruijn-core-exp
-open import debruijn.debruijn-core-subst
-open import debruijn.debruijn-core
-open import debruijn.debruijn-weakening
-open import debruijn.debruijn-lemmas-index
-open import debruijn.debruijn-lemmas-ctx
-open import debruijn.debruijn-lemmas-consistency
-open import debruijn.debruijn-lemmas-meet
-open import debruijn.debruijn-lemmas-subst
-open import debruijn.debruijn-lemmas-wf
+open import core-type
+open import core-exp
+open import core-subst
+open import core
+open import weakening
+open import lemmas-index
+open import lemmas-ctx
+open import lemmas-consistency
+open import lemmas-meet
+open import lemmas-subst
+open import lemmas-wf
 
-module debruijn.debruijn-typing-subst where
+module typing-subst where
 
   -- TtSub section
 

@@ -1,8 +1,8 @@
 open import Prelude
-open import debruijn.debruijn-core-type
-open import debruijn.debruijn-core
+open import core-type
+open import core
 
-module debruijn.debruijn-ground-dec where
+module ground-dec where
   
   ground-dec : (τ : htyp) → (τ ground) + ¬(τ ground)
   ground-dec b = Inl GBase

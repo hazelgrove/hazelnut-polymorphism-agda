@@ -1,11 +1,11 @@
 open import Nat
 open import Prelude
-open import debruijn.debruijn-core-type
-open import debruijn.debruijn-core-subst
-open import debruijn.debruijn-core
-open import debruijn.debruijn-lemmas-consistency
+open import core-type
+open import core-subst
+open import core
+open import lemmas-consistency
 
-module debruijn.debruijn-lemmas-prec where
+module lemmas-prec where
 
   ⊑t-refl : (τ : htyp) → τ ⊑t τ
   ⊑t-refl b = PTBase 
@@ -56,15 +56,6 @@ module debruijn.debruijn-lemmas-prec where
   ⊑t-↓ PTTVar = PTTVar
   ⊑t-↓ (PTArr prec prec₁) = PTArr (⊑t-↓ prec) (⊑t-↓ prec₁)
   ⊑t-↓ (PTForall prec) = PTForall (⊑t-↓ prec)
-
-  ⊑t-TT : ∀{n τ1 τ2 τ3 τ4} → (τ1 ⊑t τ3) → (τ2 ⊑t τ4) → (TT[ τ1 / n ] τ2) ⊑t (TT[ τ3 / n ] τ4)
-  ⊑t-TT prec1 PTBase = PTBase
-  ⊑t-TT prec1 PTHole = PTHole
-  ⊑t-TT {n = n} prec1 (PTTVar {n = m}) with natEQ n m 
-  ... | Inl refl = prec1 
-  ... | Inr x = PTTVar
-  ⊑t-TT prec1 (PTArr prec2 prec3) = PTArr (⊑t-TT prec1 prec2) (⊑t-TT prec1 prec3)
-  ⊑t-TT prec1 (PTForall prec2) = PTForall (⊑t-TT (⊑t-↑ prec1) prec2)
 
   ⊑t-TTsub : ∀{n τ1 τ2 τ3 τ4} → (τ1 ⊑t τ3) → (τ2 ⊑t τ4) → TTSub n τ1 τ2 ⊑t TTSub n τ3 τ4
   ⊑t-TTsub prec1 PTBase = PTBase

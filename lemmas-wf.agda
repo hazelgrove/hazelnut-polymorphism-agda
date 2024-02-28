@@ -1,14 +1,14 @@
 open import Nat
 open import Prelude
-open import debruijn.debruijn-core-type
-open import debruijn.debruijn-core-subst
-open import debruijn.debruijn-core
-open import debruijn.debruijn-weakening
-open import debruijn.debruijn-lemmas-index
-open import debruijn.debruijn-lemmas-meet
-open import debruijn.debruijn-lemmas-subst
+open import core-type
+open import core-subst
+open import core
+open import weakening
+open import lemmas-index
+open import lemmas-meet
+open import lemmas-subst
 
-module debruijn.debruijn-lemmas-wf where
+module lemmas-wf where
 
   wf-inc : ∀{Γ τ m} → Γ ⊢ τ wf → (TVar, Γ) ⊢ ↑ m 1 τ wf
   wf-inc {m = m} (WFSkip wf) = weakening-wf-var-n (wf-inc {m = m} wf)

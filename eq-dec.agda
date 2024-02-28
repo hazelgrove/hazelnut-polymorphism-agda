@@ -1,10 +1,10 @@
 
 open import Prelude
 open import Nat
-open import debruijn.debruijn-core-type
-open import debruijn.debruijn-core-exp
+open import core-type
+open import core-exp
 
-module debruijn.debruijn-eq-dec where
+module eq-dec where
 
   htyp-eq-dec : (τ1 τ2 : htyp) → (τ1 == τ2) + (τ1 ≠ τ2)
   htyp-eq-dec b b = Inl refl

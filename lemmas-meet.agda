@@ -1,9 +1,9 @@
 open import Nat
 open import Prelude
-open import debruijn.debruijn-core-type
-open import debruijn.debruijn-lemmas-prec
+open import core-type
+open import lemmas-prec
 
-module debruijn.debruijn-lemmas-meet where
+module lemmas-meet where
 
   ⊓-ability : ∀{τ1 τ2} → τ1 ~ τ2 → Σ[ τ3 ∈ htyp ] (τ1 ⊓ τ2 == τ3)  
   ⊓-ability ConsistBase = b , MeetBase

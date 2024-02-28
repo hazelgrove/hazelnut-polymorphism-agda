@@ -1,59 +1,61 @@
-{-# OPTIONS --allow-unsolved-metas #-}
-
 open import Nat
 open import Prelude
+open import core-type
 open import core
--- open typctx
-open import contexts
-open import lemmas-consistency
-open import lemmas-disjointness
 open import weakening
-open import lemmas-well-formed
+open import lemmas-wf
+open import lemmas-consistency
+open import lemmas-prec
+open import lemmas-meet
 
 module typed-elaboration where
 
+  ⊑t-ana : ∀{Γ e τ d τ'} → Γ ⊢ e ⇐ τ ~> d :: τ' → τ' ⊑t τ
+  ⊑t-ana (EALam meet ana) with ⊓-lb meet 
+  ... | PTHole , _ = PTHole
+  ... | PTArr prec1 prec2 , _ = PTArr prec1 (⊑t-trans (⊑t-ana ana) prec2)
+  ⊑t-ana (EATLam meet ana) with ⊓-lb meet 
+  ... | PTHole , _ = PTHole
+  ... | PTForall prec , _ = PTForall (⊑t-trans (⊑t-ana ana) prec)
+  ⊑t-ana (EASubsume neq syn meet) = π1 (⊓-lb meet)
+
+  consist-ana : ∀{Γ e τ τ' d} →
+    ⊢ Γ ctxwf → 
+    Γ ⊢ τ wf → 
+    Γ ⊢ e ⇐ τ ~> d :: τ' →
+    τ' ~ τ
+  consist-ana ctxwf wf ana = ⊑t-consist (⊑t-ana ana)
+
   mutual 
 
-    typed-elaboration-synth : ∀{Γ e τ d Δ Θ} →
-                            Θ ⊢ Γ tctxwf → 
-                            Θ , Γ ⊢ e ⇒ τ ~> d ⊣ Δ →
-                            Δ , Θ , Γ ⊢ d :: τ
-    typed-elaboration-synth ctxwf ESConst = TAConst
-    typed-elaboration-synth ctxwf (ESVar x₁) = TAVar x₁
-    typed-elaboration-synth ctxwf (ESLam apt wf ex) = TALam apt wf (typed-elaboration-synth (merge-tctx-wf ctxwf wf) ex)
-    typed-elaboration-synth ctxwf (ESTLam ex) = {! TATLam (typed-elaboration-synth (weaken-tctx-wf ctxwf) ex) !}
-    typed-elaboration-synth ctxwf (ESAp {Δ1 = Δ1} _ d x₁ x₂ x₃ x₄)
-      with match-arr-wf (wf-synth ctxwf x₁) x₂
-    ... | WFArr wf1 wf2
-      with typed-elaboration-ana ctxwf (WFArr wf1 wf2) x₃ | typed-elaboration-ana ctxwf wf1 x₄
-    ... | con1 , ih1 | con2 , ih2  = {! TAAp (TACast (weaken-ta-Δ1 d ih1) (WFArr wf1 wf2) con1) (TACast (weaken-ta-Δ2 {Δ1 = Δ1} d ih2) wf1 con2) !}
-    typed-elaboration-synth ctxwf (ESTAp wf x m ex eq) 
-      with match-forall-wf (wf-synth ctxwf x) m
-    ... | wf'
-      with typed-elaboration-ana ctxwf wf' ex 
-    ... | con , ih = TATAp wf {! (TACast ih wf' con) !} eq
-    typed-elaboration-synth ctxwf (ESEHole {Γ = Γ} {u = u})  = {! TAEHole (ctx-top ∅ u (Γ , ⦇-⦈) refl) !} {! (STAId (λ x τ z → z)) !}
-    typed-elaboration-synth {Θ = Θ} ctxwf (ESNEHole {Γ = Γ} {τ = τ} {u = u} {Δ = Δ} (d1 , d2) ex)
-      with typed-elaboration-synth ctxwf ex
-    ... | ih1 = {! TANEHole {Δ = Δ ,, (u , Θ , Γ , ⦇-⦈)} (ctx-top Δ u (Γ , ⦇-⦈) (d2 u (lem-domsingle _ _))) (weaken-ta-Δ1 (d1 , d2) ih1) !} {! (STAId (λ x τ₁ z → z)) !}
-    typed-elaboration-synth ctxwf (ESAsc wf x)
-      with typed-elaboration-ana ctxwf wf x
-    ... | con , ih = {! TACast ih wf con !}
+    typed-elaboration-syn : ∀{Γ e τ d} →
+      (⊢ Γ ctxwf) → 
+      (Γ ⊢ e ⇒ τ ~> d) →
+      (Γ ⊢ d :: τ)
+    typed-elaboration-syn ctxwf ESConst = TAConst
+    typed-elaboration-syn ctxwf (ESVar x) = TAVar x
+    typed-elaboration-syn ctxwf (ESLam x syn) = TALam x (typed-elaboration-syn (CtxWFVar x ctxwf) syn)
+    typed-elaboration-syn ctxwf (ESTLam syn) = TATLam (typed-elaboration-syn (CtxWFTVar ctxwf) syn)
+    typed-elaboration-syn ctxwf (ESAp syn meet ana1 ana2) with ⊓-lb meet | wf-⊓ meet (wf-syn ctxwf syn) (WFArr WFHole WFHole)
+    ... | prec1 , prec2 | WFArr wf1 wf2 = 
+      TAAp (TACast (typed-elaboration-ana ctxwf (WFArr wf1 wf2) ana1) (WFArr wf1 wf2) (consist-ana ctxwf (WFArr wf1 wf2) ana1)) 
+      ((TACast (typed-elaboration-ana ctxwf wf1 ana2) wf1 (consist-ana ctxwf wf1 ana2)))
+    typed-elaboration-syn ctxwf (ESTAp wf syn meet ana refl) = 
+      let wf' = wf-⊓ meet (wf-syn ctxwf syn) (WFForall WFHole) in 
+      TATAp wf (TACast (typed-elaboration-ana ctxwf wf' ana) wf' (consist-ana ctxwf wf' ana)) refl
+    typed-elaboration-syn ctxwf ESEHole = TAEHole
+    typed-elaboration-syn ctxwf (ESNEHole syn) = TANEHole (typed-elaboration-syn ctxwf syn)
+    typed-elaboration-syn ctxwf (ESAsc wf ana) = TACast (typed-elaboration-ana ctxwf wf ana) wf (consist-ana ctxwf wf ana)
 
-    typed-elaboration-ana : ∀{Γ e τ τ' d Δ Θ} →
-                          Θ ⊢ Γ tctxwf → 
-                          Θ ⊢ τ wf → 
-                          Θ , Γ ⊢ e ⇐ τ ~> d :: τ' ⊣ Δ →
-                          (τ' ~ τ) × (Δ , Θ , Γ ⊢ d :: τ')
-    typed-elaboration-ana ctxwf wf (EALam x₁ MAHole ex)
-      with typed-elaboration-ana (merge-tctx-wf ctxwf wf) wf ex
-    ... | con , D = {! TCHole1 !} , TALam x₁ wf D
-    typed-elaboration-ana ctxwf (WFArr wf1 wf2) (EALam x₁ MAArr ex)
-      with typed-elaboration-ana (merge-tctx-wf ctxwf wf1) wf2 ex
-    ... | con , D = {! TCArr ~refl con !} , TALam x₁ wf1 D
-    typed-elaboration-ana ctxwf wf (EASubsume x x₁ x₂ x₃) = ~sym x₃ , typed-elaboration-synth ctxwf x₂
-    typed-elaboration-ana ctxwf wf (EAEHole {Γ = Γ} {u = u}) = ~refl , {! TAEHole (ctx-top ∅ u (Γ , _) refl) !} {! (STAId (λ x τ z → z)) !}
-    typed-elaboration-ana {Θ = Θ} ctxwf wf (EANEHole {Γ = Γ} {u = u} {τ = τ} {Δ = Δ} (d1 , d2) x)
-      with typed-elaboration-synth ctxwf x
-    ... | ih1 = ~refl , {! TANEHole {Δ = Δ ,, (u , Θ , Γ , τ)} (ctx-top Δ u (Γ , τ) (d2 u (lem-domsingle _ _)) ) (weaken-ta-Δ1 (d1 , d2) ih1) !} {! (STAId (λ x₁ τ₁ z → z)) !}
-    typed-elaboration-ana {e = ·Λ x₂ e} x x₁ (EATLam x₃ x₄ x₅ x₆) = {!   !}
+    typed-elaboration-ana : ∀{Γ e τ τ' d} →
+      ⊢ Γ ctxwf → 
+      Γ ⊢ τ wf → 
+      Γ ⊢ e ⇐ τ ~> d :: τ' →
+      Γ ⊢ d :: τ'
+    typed-elaboration-ana ctxwf wf (EALam meet ana) with wf-⊓ meet wf (WFArr WFHole WFHole) 
+    ... | WFArr wf1 wf2 = TALam wf1 (typed-elaboration-ana (CtxWFVar wf1 ctxwf) (weakening-wf-var wf2) ana)
+    typed-elaboration-ana ctxwf wf (EATLam meet ana) with wf-⊓ meet wf (WFForall WFHole) 
+    ... | WFForall wf' = TATLam (typed-elaboration-ana (CtxWFTVar ctxwf) wf' ana)
+    typed-elaboration-ana ctxwf wf (EASubsume neq syn meet) = 
+        TACast (typed-elaboration-syn ctxwf syn) (wf-⊓ meet wf (wf-elab-syn ctxwf syn)) (~sym (⊑t-consist (π2 (⊓-lb meet))))
+    

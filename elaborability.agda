@@ -1,78 +1,57 @@
 open import Nat
 open import Prelude
+open import core-type
+open import core-exp
 open import core
-open import contexts
-open import htype-decidable
-open import lemmas-matching
-open import disjointness
+open import lemmas-meet
+open import lemmas-prec
+open import type-assignment-unicity
 
 module elaborability where
-  mutual
-    elaborability-synth : ∀{Γ e τ Θ} →
-                          Θ , Γ ⊢ e => τ →
-                          Σ[ d ∈ ihexp ] Σ[ Δ ∈ hctx ]
-                            (Θ , Γ ⊢ e ⇒ τ ~> d ⊣ Δ)
-    elaborability-synth SConst = _ , _ , ESConst
-    elaborability-synth (SAsc {τ = τ} wf wt)
-      with elaborability-ana wt
-    ... | _ , _ , τ' , D  = _ , _ , ESAsc wf D
-    elaborability-synth (SVar x) = _ , _ , ESVar x
-    elaborability-synth (SAp dis wt1 m wt2)
-      with elaborability-ana (ASubsume wt1 (match-consist m)) | elaborability-ana wt2
-    ... | _ , _ , _ , D1 | _ , _ , _ , D2 = _ , _ , ESAp dis (elab-ana-disjoint dis D1 D2) wt1 m D1 D2
-    elaborability-synth (STAp wf wt m eq) with elaborability-ana (ASubsume wt (forall-match-consist m))
-    ... | _ , _ , _ , wt' = _ , _ , ESTAp wf wt m wt' eq
-    elaborability-synth SEHole = _ , _ , ESEHole
-    elaborability-synth (SNEHole new wt)
-      with elaborability-synth wt
-    ... | d' , Δ' , wt' = _ , _ , ESNEHole (elab-new-disjoint-synth new wt') wt'
-    elaborability-synth (SLam apt wf wt)
-      with elaborability-synth wt
-    ... | d' , Δ' , wt' = _ , _ , ESLam apt wf wt'
-    elaborability-synth (STLam wt) with elaborability-synth wt
-    ... | _ , _ , wt' = _ , _ , ESTLam wt'
 
-    elaborability-ana : ∀{Γ e τ Θ} →
-                         Θ , Γ ⊢ e <= τ →
-                          Σ[ d ∈ ihexp ] Σ[ Δ ∈ hctx ] Σ[ τ' ∈ htyp ]
-                            (Θ , Γ ⊢ e ⇐ τ ~> d :: τ' ⊣ Δ)
-    elaborability-ana {e = e} (ASubsume D x₁)
-      with elaborability-synth D
-    -- these cases just pass through, but we need to pattern match so we can prove things aren't holes
-    elaborability-ana {e = c} (ASubsume D x₁)                    | _ , _ , D' = _ , _ , _ , EASubsume (λ _ ()) (λ _ _ ()) D' x₁
-    elaborability-ana {e = e ·: x} (ASubsume D x₁)               | _ , _ , D' = _ , _ , _ , EASubsume (λ _ ()) (λ _ _ ()) D' x₁
-    elaborability-ana {e = X x} (ASubsume D x₁)                  | _ , _ , D' = _ , _ , _ , EASubsume (λ _ ()) (λ _ _ ()) D' x₁
-    elaborability-ana {e = ·λ x e} (ASubsume D x₁)               | _ , _ , D' = _ , _ , _ , EASubsume (λ _ ()) (λ _ _ ()) D' x₁
-    elaborability-ana {e = ·λ x [ x₁ ] e} (ASubsume D x₂)        | _ , _ , D' = _ , _ , _ , EASubsume (λ _ ()) (λ _ _ ()) D' x₂
-    elaborability-ana {e = ·Λ _ e} (ASubsume D x₁)                 | _ , _ , D' = _ , _ , _ , EASubsume (λ _ ()) (λ _ _ ()) D' x₁ 
-    elaborability-ana {e = e1 ∘ e2} (ASubsume D x₁)              | _ , _ , D' = _ , _ , _ , EASubsume (λ _ ()) (λ _ _ ()) D' x₁
-    elaborability-ana {e = e < τ >} (ASubsume D x₁)              | _ , _ , D' = _ , _ , _ , EASubsume (λ _ ()) (λ _ _ ()) D' x₁ 
-    -- the two holes are special-cased
-    elaborability-ana {e = ⦇-⦈[ x ]} (ASubsume _ _ )                   | _ , _ , _  = _ , _ , _ , EAEHole
-    elaborability-ana {Γ} {⦇⌜ e ⌟⦈[ x ]} (ASubsume (SNEHole new wt) x₂) | _ , _ , ESNEHole x₁ D' with elaborability-synth wt
-    ... | w , y , z =  _ , _ , _ , EANEHole (elab-new-disjoint-synth new z) z
-    -- the lambda cases
-    elaborability-ana (ALam x₁ m wt)
-      with elaborability-ana wt
-    ... | _ , _ , _ , D' = _ , _ , _ , EALam x₁ m D'
-    elaborability-ana {e = ·Λ _ c} (ATLam m wt) with elaborability-ana wt
-    ... | _ , _ , _ , D' = _ , _ , _ , EATLam (λ u ()) (λ e' u ()) m D'
-    elaborability-ana {e = ·Λ _ (e ·: x)} (ATLam m wt) with elaborability-ana wt
-    ... | _ , _ , _ , D' = _ , _ , _ , EATLam (λ u ()) (λ e' u ()) m D'
-    elaborability-ana {e = ·Λ _ (X x)} (ATLam m wt) with elaborability-ana wt
-    ... | _ , _ , _ , D' = _ , _ , _ , EATLam (λ u ()) (λ e' u ()) m D'
-    elaborability-ana {e = ·Λ _ (·λ x e)} (ATLam m wt) with elaborability-ana wt
-    ... | _ , _ , _ , D' = _ , _ , _ , EATLam (λ u ()) (λ e' u ()) m D'
-    elaborability-ana {e = ·Λ _ (·λ x [ x₁ ] e)} (ATLam m wt) with elaborability-ana wt
-    ... | _ , _ , _ , D' = _ , _ , _ , EATLam (λ u ()) (λ e' u ()) m D'
-    elaborability-ana {e = ·Λ _ (·Λ x e)} (ATLam m wt) with elaborability-ana wt
-    ... | _ , _ , _ , D' = _ , _ , _ , EATLam (λ u ()) (λ e' u ()) m D'
-    elaborability-ana {e = ·Λ _ (e ∘ e₁)} (ATLam m wt) with elaborability-ana wt
-    ... | _ , _ , _ , D' = _ , _ , _ , EATLam (λ u ()) (λ e' u ()) m D'
-    elaborability-ana {e = ·Λ _ (e < x >)} (ATLam m wt) with elaborability-ana wt
-    ... | _ , _ , _ , D' = _ , _ , _ , EATLam (λ u ()) (λ e' u ()) m D'
-    elaborability-ana {e = ·Λ _ ⦇-⦈[ x ]} (ATLam MFHole wt) = _ , _ , _ , EASubsume (λ u ()) (λ e' u ()) (ESTLam ESEHole) TCHole2
-    elaborability-ana {e = ·Λ _ ⦇-⦈[ x ]} (ATLam MFForall wt) = _ , _ , _ , EASubsume (λ u ()) (λ e' u ()) (ESTLam ESEHole) (TCForall TCHole1)
-    elaborability-ana {e = ·Λ _ ⦇⌜ e ⌟⦈[ x ]} (ATLam m (ASubsume (SNEHole x₁ wt) cons)) with elaborability-synth wt 
-    elaborability-ana {_} {·Λ _ ⦇⌜ e ⌟⦈[ x ]} (ATLam MFHole (ASubsume (SNEHole x₁ wt) cons)) | _ , _ , D' = _ , _ , _ , EASubsume (λ u ()) (λ e' u ()) (ESTLam (ESNEHole {!   !} D')) TCHole2
-    elaborability-ana {_} {·Λ _ ⦇⌜ e ⌟⦈[ x ]} (ATLam MFForall (ASubsume (SNEHole x₁ wt) cons)) | _ , _ , D' = _ , _ , _ , EASubsume (λ u ()) (λ e' u ()) (ESTLam (ESNEHole {!   !} D')) (TCForall cons)
+  mutual
+    elaborability-synth : ∀{Γ e τ} →
+      Γ ⊢ e => τ →
+      Σ[ d ∈ ihexp ] (Γ ⊢ e ⇒ τ ~> d)
+    elaborability-synth SConst = c , ESConst
+    elaborability-synth (SAsc wf ana) with elaborability-ana ana 
+    ... | d , τ , ana' = d ⟨ τ ⇒ _ ⟩ , ESAsc wf ana'
+    elaborability-synth (SVar x) = X _ , ESVar x
+    elaborability-synth (SAp syn x ana) with elaborability-synth syn | elaborability-ana (ASubsume syn (⊑t-consist (π1 (⊓-lb x)))) | elaborability-ana ana
+    ... | d1 , syn' | d2 , τ1 , ana1 | d3 , τ2 , ana2 = ((d2 ⟨ τ1 ⇒ _ ⟩) ∘ (d3 ⟨ _ ⇒ _ ⟩)) , (ESAp syn x ana1 ana2)
+    elaborability-synth SEHole = ⦇-⦈ , ESEHole
+    elaborability-synth (SNEHole syn) with elaborability-synth syn 
+    ... | d , elab = ⦇⌜ d ⌟⦈ , ESNEHole elab
+    elaborability-synth (SLam x syn) with elaborability-synth syn 
+    ... | d , elab = (·λ[ _ ] d) , ESLam x elab
+    elaborability-synth (STLam syn) with elaborability-synth syn 
+    ... | d , elab = ·Λ d , ESTLam elab
+    elaborability-synth (STAp x syn x₁ refl) with elaborability-ana (ASubsume syn (⊑t-consist (π1 (⊓-lb x₁)))) 
+    ... | d , τ , elab = ((d ⟨ τ ⇒ ·∀ _ ⟩) < _ >) , (ESTAp x syn x₁ elab refl)
+
+    is-tlam : (e : hexp) → ((e' : hexp) → e ≠ ·Λ e') + ( Σ[ e' ∈ hexp ] (e == ·Λ e') )
+    is-tlam c = Inl (λ x ())
+    is-tlam (e ·: x) = Inl (λ x ())
+    is-tlam (X x) = Inl (λ x ())
+    is-tlam (·λ e) = Inl (λ x ())
+    is-tlam (·λ[ x ] e) = Inl (λ x ())
+    is-tlam (·Λ e) = Inr (e , refl)
+    is-tlam ⦇-⦈ = Inl (λ x ())
+    is-tlam ⦇⌜ e ⌟⦈ = Inl (λ x ())
+    is-tlam (e ∘ e₁) = Inl (λ x ())
+    is-tlam (e < x >) = Inl (λ x ())
+
+    elaborability-ana : ∀{Γ e τ} →
+      Γ ⊢ e <= τ →
+      Σ[ d ∈ ihexp ] Σ[ τ' ∈ htyp ] (Γ ⊢ e ⇐ τ ~> d :: τ')
+    elaborability-ana (ALam x ana) with elaborability-ana ana
+    ... | d , τ , elab = (·λ[ _ ] d) , _ ==> τ , EALam x elab
+    elaborability-ana (ATLam x ana) with elaborability-ana ana
+    ... | d , τ , elab =  ·Λ d , ·∀ τ , EATLam x elab 
+    elaborability-ana {e = e} (ASubsume syn meet) with is-tlam e 
+    elaborability-ana {e = e} (ASubsume syn meet) | Inl neq with elaborability-synth syn | ⊓-ability meet
+    elaborability-ana {e = e} (ASubsume syn meet) | Inl neq | d , elab | τ , meet' = _ , _ , (EASubsume (Subsumable neq) elab meet')
+    elaborability-ana {e = .(·Λ e')} (ASubsume (STLam syn) ConsistHole2) | Inr (e' , refl) with elaborability-ana (ASubsume syn ConsistHole2)
+    elaborability-ana {e = .(·Λ e')} (ASubsume (STLam syn) ConsistHole2) | Inr (e' , refl) | d , τ , elab  = ·Λ d , ·∀ τ , EATLam MeetHoleL elab
+    elaborability-ana {e = .(·Λ e')} (ASubsume (STLam syn) (ConsistForall con)) | Inr (e' , refl) with elaborability-ana (ASubsume syn con)
+    elaborability-ana {e = .(·Λ e')} (ASubsume (STLam syn) (ConsistForall con)) | Inr (e' , refl) | d , τ , elab  = ·Λ d , ·∀ τ , EATLam (MeetForall MeetHoleR) elab

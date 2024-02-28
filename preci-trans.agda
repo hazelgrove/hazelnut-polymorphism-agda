@@ -1,17 +1,17 @@
 open import Nat
 open import Prelude
-open import debruijn.debruijn-core-type
-open import debruijn.debruijn-core-exp
-open import debruijn.debruijn-core
-open import debruijn.debruijn-lemmas-index
-open import debruijn.debruijn-lemmas-consistency
-open import debruijn.debruijn-lemmas-prec
-open import debruijn.debruijn-lemmas-meet
-open import debruijn.debruijn-lemmas-wf
-open import debruijn.debruijn-typed-elaboration
-open import debruijn.debruijn-type-assignment-unicity
+open import core-type
+open import core-exp
+open import core
+open import lemmas-index
+open import lemmas-consistency
+open import lemmas-prec
+open import lemmas-meet
+open import lemmas-wf
+open import typed-elaboration
+open import type-assignment-unicity
 
-module debruijn.debruijn-preci-trans where 
+module preci-trans where 
 
   ⊑i-trans : ∀{Θ Γ1 Γ2 Γ3 d1 d2 d3} → Γ1 ⊑c Γ2 → Γ2 ⊑c Γ3 → Θ , Γ1 , Γ2 ⊢ d1 ⊑i d2 → Θ , Γ2 , Γ3 ⊢ d2 ⊑i d3 → Θ , Γ1 , Γ3 ⊢ d1 ⊑i d3
   ⊑i-trans precc1 precc2 prec1 (PIEHole wt prec2) = PIEHole {!   !} {!   !}

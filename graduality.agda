@@ -1,234 +1,171 @@
 open import Nat
 open import Prelude
+open import core-type
+open import core-exp
 open import core
-open alpha
-open import lemmas-alpha
+open import lemmas-index
 open import lemmas-consistency
-
-open import contexts
-
--- Note from Thomas: the draft paper is missing a definition of ⊑ for terms
+open import lemmas-prec
+open import lemmas-meet
+open import lemmas-wf
 
 module graduality where
 
-  data _⇓_ : (e : hexp) (v : ihexp) → Set where
-    Converge : 
-      ∀{e τ d Δ v} → 
-      ∅ , ∅ ⊢ e ⇒ τ ~> d ⊣ Δ → 
-      d ↦* v → 
-      v boxedval →
-      e ⇓ v
-  
-  data _⇑ : (e : hexp) → Set where
-    Diverge : 
-      ∀{e τ d Δ} → 
-      ∅ , ∅ ⊢ e ⇒ τ ~> d ⊣ Δ → 
-      (∀{v} → d ↦* v → v boxedval → ⊥) → 
-      e ⇑
-
-  data _⊑typ_ : (τ1 τ2 : htyp) → Set where 
-    PTBase : b ⊑typ b 
-    PTHole : ∀{τ} → τ ⊑typ ⦇-⦈     
-    PTTVar : ∀{x} → (T x) ⊑typ (T x) 
-    PTArr : ∀{τ1 τ2 τ3 τ4} → τ1 ⊑typ τ3 → τ2 ⊑typ τ4 → (τ1 ==> τ2) ⊑typ (τ3 ==> τ4) 
-    PTForall : ∀{x τ1 τ2} → τ1 ⊑typ τ2 → (·∀ x τ1) ⊑typ (·∀ x τ2) 
-
-  data _⊑_ : (e1 e2 : hexp) → Set where
-    PConst : c ⊑ c
-    PVar : ∀{x} → (X x) ⊑ (X x) 
-    PAsc : ∀{e1 e2 τ1 τ2} → e1 ⊑ e2 → τ1 ⊑typ τ2 → (e1 ·: τ1) ⊑ (e2 ·: τ2)
-    PEHole : ∀{u e} → e ⊑ ⦇-⦈[ u ]
-    PLam1 : ∀{x e1 e2} → e1 ⊑ e2 → (·λ x e1) ⊑ (·λ x e2)
-    PLam2 : ∀{x e1 e2 τ1 τ2} → e1 ⊑ e2 → τ1 ⊑typ τ2 → (·λ x [ τ1 ] e1) ⊑ (·λ x [ τ2 ] e2)
-    PTLam : ∀{t e1 e2} → e1 ⊑ e2 → (·Λ t e1) ⊑ (·Λ t e2)
-    PNEHole : ∀{u e1 e2} → e1 ⊑ e2 → hole-name-new e2 u →(⦇⌜ e1 ⌟⦈[ u ]) ⊑ (⦇⌜ e2 ⌟⦈[ u ])
-    PAp :  ∀{e1 e2 e3 e4} → e1 ⊑ e3 → e2 ⊑ e4 → holes-disjoint e3 e4 → (e1 ∘ e2) ⊑ (e3 ∘ e4)
-    PTAp : ∀{e1 e2 τ1 τ2} → e1 ⊑ e2 → τ1 ⊑typ τ2 → (e1 < τ1 >) ⊑ (e2 < τ2 >)
-
-  data _⊑i_ : (d1 d2 : ihexp) → Set where
-    PIConst : c ⊑i c
-    PIVar : ∀{x} → (X x) ⊑i (X x) 
-    PIEHole : ∀{u e} → e ⊑i ⦇-⦈⟨ u ⟩
-    PILam : ∀{x d1 d2 τ1 τ2} → d1 ⊑i d2 → τ1 ⊑typ τ2 → (·λ x [ τ1 ] d1) ⊑i (·λ x [ τ2 ] d2)
-    PITLam : ∀{t d1 d2} → d1 ⊑i d2 → (·Λ t d1) ⊑i (·Λ t d2)
-    PINEHole : ∀{u d1 d2} → d1 ⊑i d2 →(⦇⌜ d1 ⌟⦈⟨ u ⟩) ⊑i (⦇⌜ d2 ⌟⦈⟨ u ⟩)
-    PIAp :  ∀{d1 d2 d3 d4} → d1 ⊑i d3 → d2 ⊑i d4 → (d1 ∘ d2) ⊑i (d3 ∘ d4)
-    PITAp : ∀{d1 d2 τ1 τ2} → d1 ⊑i d2 → τ1 ⊑typ τ2 → (d1 < τ1 >) ⊑i (d2 < τ2 >)
-    PICast : ∀{d1 d2 τ1 τ2 τ3 τ4} → d1 ⊑i d2 → τ1 ⊑typ τ3 → τ2 ⊑typ τ4 → (d1 ⟨ τ1 ⇒ τ2 ⟩) ⊑i (d2 ⟨ τ3 ⇒ τ4 ⟩)
-    PIFailedCast : ∀{d1 d2 τ1 τ2 τ3 τ4} → d1 ⊑i d2 → τ1 ⊑typ τ3 → τ2 ⊑typ τ4 → (d1 ⟨ τ1 ⇒⦇-⦈⇏ τ2 ⟩) ⊑i (d2 ⟨ τ3 ⇒⦇-⦈⇏ τ4 ⟩)
-
-  _⊑ctx_ : (Γ1 Γ2 : tctx) → Set 
-  Γ1 ⊑ctx Γ2 = (∀{x τ1 τ2} → (x , τ1) ∈ Γ1 → (x , τ2) ∈ Γ2 → (τ1 ⊑typ τ2)) × (∀{x} → x # Γ1 → x # Γ2) × (∀{x} → x # Γ2 → x # Γ1)
-
-  ⊑typ-refl : ∀{τ} → τ ⊑typ τ
-  ⊑typ-refl {τ = b} = PTBase
-  ⊑typ-refl {τ = T x} = PTTVar
-  ⊑typ-refl {τ = ⦇-⦈} = PTHole
-  ⊑typ-refl {τ = τ ==> τ₁} = PTArr ⊑typ-refl ⊑typ-refl
-  ⊑typ-refl {τ = ·∀ x τ} = PTForall ⊑typ-refl
-
-  ⊑typ-wf : ∀{Θ τ1 τ2} → Θ ⊢ τ1 wf → τ1 ⊑typ τ2 → Θ ⊢ τ2 wf
-  ⊑typ-wf wf PTBase = wf
-  ⊑typ-wf wf PTHole = WFHole
-  ⊑typ-wf wf PTTVar = wf
-  ⊑typ-wf (WFArr wf wf₁) (PTArr prec prec₁) = WFArr (⊑typ-wf wf prec) (⊑typ-wf wf₁ prec₁)
-  ⊑typ-wf (WFForall wf) (PTForall prec) = WFForall (⊑typ-wf wf prec)
-
-  ⊑typ-consist-helper : ∀{τ τ' τ'' ΓL ΓR} → ΓL , ΓR ⊢ τ ~ τ' → τ ⊑typ τ'' → ΓL , ΓR ⊢ τ'' ~ τ'
-  ⊑typ-consist-helper ConsistHole1 prec = ConsistHole1
-  ⊑typ-consist-helper consist PTBase = consist
-  ⊑typ-consist-helper consist PTHole = ConsistHole2
-  ⊑typ-consist-helper consist PTTVar = consist
-  ⊑typ-consist-helper (ConsistArr consist consist₁) (PTArr prec prec₁) = ConsistArr (⊑typ-consist-helper consist prec) (⊑typ-consist-helper consist₁ prec₁)
-  ⊑typ-consist-helper (ConsistForall consist) (PTForall prec) = ConsistForall (⊑typ-consist-helper consist prec)
-
-  ⊑typ-consist : ∀{τ τ' τ''} → τ ~ τ' → τ ⊑typ τ'' → τ'' ~ τ'
-  ⊑typ-consist consist prec = ⊑typ-consist-helper consist prec
-
-  ⊑typ-consist-right : ∀{τ τ' τ''} → τ ~ τ' → τ' ⊑typ τ'' → τ ~ τ''
-  ⊑typ-consist-right consist prec = ~sym (⊑typ-consist (~sym consist) prec)
-
-  ⊑typ-▸arr : ∀{τ τ' τ1 τ2} → τ ▸arr (τ1 ==> τ2) → τ ⊑typ τ' → Σ[ τ1' ∈ htyp ] Σ[ τ2' ∈ htyp ] ((τ' ▸arr (τ1' ==> τ2')) × (τ1 ⊑typ τ1') × (τ2 ⊑typ τ2'))
-  ⊑typ-▸arr match PTHole = ⦇-⦈ , ⦇-⦈ , MAHole , PTHole , PTHole
-  ⊑typ-▸arr MAArr (PTArr prec prec₁) = _ , _ , MAArr , prec , prec₁
-
-  ⊑typ-▸forall : ∀{t τ1 τ1' τ2} → τ1 ▸forall (·∀ t τ2) → τ1 ⊑typ τ1' → Σ[ τ2' ∈ htyp ] ((τ1' ▸forall (·∀ t τ2')) × (τ2 ⊑typ τ2'))
-  ⊑typ-▸forall match PTHole = ⦇-⦈ , MFHole , PTHole
-  ⊑typ-▸forall MFForall (PTForall prec) = _ , MFForall , prec
-
-  ⊑typ-Typsubst : ∀{t τ1 τ2 τ3 τ4} → (τ1 ⊑typ τ3) → (τ2 ⊑typ τ4) → (Typ[ τ1 / t ] τ2) ⊑typ (Typ[ τ3 / t ] τ4)
-  ⊑typ-Typsubst prec1 PTBase = PTBase
-  ⊑typ-Typsubst prec1 PTHole = PTHole
-  ⊑typ-Typsubst {t = t} prec1 (PTTVar {x = x}) with natEQ t x 
-  ... | Inl refl = prec1 
-  ... | Inr x = PTTVar
-  ⊑typ-Typsubst prec1 (PTArr prec2 prec3) = PTArr (⊑typ-Typsubst prec1 prec2) (⊑typ-Typsubst prec1 prec3)
-  ⊑typ-Typsubst {t = t} prec1 (PTForall {x = x} prec2) with natEQ t x 
-  ... | Inl refl = PTForall prec2 
-  ... | Inr x = PTForall (⊑typ-Typsubst prec1 prec2)
-
-  ⊑ctx-var : ∀{x τ Γ Γ'} → (x , τ) ∈ Γ → Γ ⊑ctx Γ' → Σ[ τ' ∈ htyp ] (((x , τ') ∈ Γ') × (τ ⊑typ τ'))
-  ⊑ctx-var {x = x} {Γ = Γ} {Γ' = Γ'} inctx ( precctx , apt1 , apt2 ) with Γ' x in eq'
-  ... | Some τ' = τ' ,  refl , precctx inctx eq' 
-  ... | None rewrite (apt2 eq') with inctx 
-  ... | () 
-
-  apt-lem : ∀{y x τ τ'} → (Γa Γb : tctx) → ((z : Nat) → z # Γa → z # Γb) → y # (Γa ,, (x , τ)) → y # (Γb ,, (x , τ'))
-  apt-lem {y = y} Γa Γb apts aptarg with Γa y in eq | Γb y in eq'
-  apt-lem {y = y} Γa Γb apts aptarg | None | Some x rewrite (apts y eq) = sym eq'
-  apt-lem {y = y} {x = x} Γa Γb apts aptarg | None | None with natEQ x y 
-  apt-lem {y = y} Γa Γb apts () | None | None | Inl refl
-  ... | Inr x = refl
-
-  other-lem : ∀{x z τ τ' τ1 τ2} → (Γ Γ' : tctx) → ((w : Nat) → w # Γ → w # Γ') → ((w : Nat) → w # Γ' → w # Γ) → ({y : Nat} {τy τy' : htyp} → (y , τy) ∈ Γ → (y , τy') ∈ Γ' → τy ⊑typ τy') → (x , τ1) ∈ (Γ ,, (z , τ)) → (x , τ2) ∈ (Γ' ,, (z , τ')) → (τ ⊑typ τ') → τ1 ⊑typ τ2
-  other-lem {x = x} Γ Γ' apt1 apt2 ind in1 in2 prectyp with Γ x in eq | Γ' x in eq' 
-  other-lem {_} Γ Γ' apt1 apt2 ind in1 in2 prectyp | Some thing | Some thing' rewrite in1 rewrite in2 = ind eq eq'
-  other-lem {_} Γ Γ' apt1 apt2 ind in1 in2 prectyp | Some thing | None rewrite (apt2 _ eq') with eq 
-  ... | () 
-  other-lem {_} Γ Γ' apt1 apt2 ind in1 in2 prectyp | None | Some thing rewrite (apt1 _ eq) with eq' 
-  ... | () 
-  other-lem {x = x} {z = z} Γ Γ' apt1 apt2 ind in1 in2 prectyp | None | None with natEQ z x | in1 | in2
-  ... | Inl refl | refl | refl = prectyp
-  ... | Inr x | () | () 
-
-  ⊑ctx-entend : ∀{Γ x τ Γ' τ'} → (Γ ⊑ctx Γ') → (τ ⊑typ τ') → (Γ ,, (x , τ)) ⊑ctx (Γ' ,, (x , τ'))
-  ⊑ctx-entend {Γ = Γ} {x = x} {τ = τ} {Γ' = Γ'} {τ' = τ'} ( precctx , apt1 , apt2 ) prectyp = ( ((λ x₁ x₂ → other-lem Γ Γ' (λ w → apt1) (λ w → apt2) precctx x₁ x₂ prectyp)) , (λ {y : Nat} → λ apt → apt-lem Γ Γ' (λ z → apt1) apt) , (λ {y : Nat} → λ apt → apt-lem Γ' Γ (λ z → apt2) apt) ) 
-    
   mutual
 
     graduality-ana : 
-      ∀{τ τ' e e' Θ Γ Γ'} →
-      (Γ ⊑ctx Γ') →
-      (τ ⊑typ τ') →
+      ∀{τ τ' e e' Γ Γ'} →
+      (Γ ⊑c Γ') →
+      (τ ⊑t τ') →
       (e ⊑ e') →
-      (Θ , Γ ⊢ e <= τ) →
-      (Θ , Γ' ⊢ e' <= τ')
-      
-    graduality-ana precctx prectyp prec (ASubsume syn consist) 
-      with graduality-syn precctx prec syn 
-    ... | τ' , syn' , prectyp' = ASubsume syn' (⊑typ-consist (⊑typ-consist-right consist prectyp') prectyp)
-    graduality-ana precctx prectyp PEHole ana = ASubsume SEHole ConsistHole1
-    graduality-ana precctx prectyp (PLam1 prec) (ALam x x₁ ana) 
-      with ⊑typ-▸arr x₁ prectyp | precctx
-    ... | τ1 , τ2 , match , prec1 , prec2 | precctxpt , apt1 , apt2 
-      = ALam (apt1 x) match (graduality-ana (⊑ctx-entend precctx prec1) prec2 prec ana)
-    graduality-ana precctx prectyp (PTLam prec) (ATLam x ana) 
-      with ⊑typ-▸forall x prectyp
-    ... | τ' , match , prec' = ATLam match (graduality-ana precctx prec' prec ana)
+      (Γ ⊢ e <= τ) →
+      (Γ' ⊢ e' <= τ') 
+
+    graduality-ana precc prect PEHole ana = ASubsume SEHole ConsistHole1
+    graduality-ana precc prect prec (ASubsume syn consist) with graduality-syn precc prec syn 
+    ... | τ' , syn' , prect' = ASubsume syn' (⊑t-consist-left (⊑t-consist-right consist prect') prect)
+    graduality-ana precc prect (PLam1 prec) (ALam meet ana) with ⊑t-⊓ prect (⊑t-refl _) meet 
+    ... | .(_ ==> _) , meet' , PTArr prect1 prect2 = ALam meet' (graduality-ana (PCVar prect1 precc) prect2 prec ana) 
+    graduality-ana precc prect (PTLam prec) (ATLam meet ana) with ⊑t-⊓ prect (⊑t-refl _) meet
+    ... | .(·∀ _) , meet' , PTForall prect' = ATLam meet' (graduality-ana (PCTVar precc) prect' prec ana)
     
     graduality-syn : 
-      ∀{e e' Θ Γ Γ' τ} →
-      (Γ ⊑ctx Γ') →
+      ∀{e e' Γ Γ' τ} →
+      (Γ ⊑c Γ') →
       (e ⊑ e') →
-      (Θ , Γ ⊢ e => τ) →
-      Σ[ τ' ∈ htyp ] ((Θ , Γ' ⊢ e' => τ') × (τ ⊑typ τ'))
-    graduality-syn precctx PConst SConst = b , SConst , PTBase
-    graduality-syn precctx PVar (SVar inctx) with ⊑ctx-var inctx precctx
-    ... | τ' , inctx' , prectyp = τ' , SVar inctx' , prectyp
-    graduality-syn {e' = e' ·: τ'} precctx (PAsc prec x) (SAsc x₁ x₂) = τ' , SAsc (⊑typ-wf x₁ x) (graduality-ana precctx x prec x₂) , x
-    graduality-syn precctx PEHole wt = ⦇-⦈ , SEHole , PTHole
-    graduality-syn ( precctx , apt1 , apt2 ) (PLam2 {τ2 = τ2} prec x) (SLam x₁ x₂ wt) 
-      with graduality-syn (⊑ctx-entend ( precctx , apt1 , apt2 ) x) prec wt 
-    ... | τ' , wt' , prectyp = τ2 ==> τ' , (SLam (apt1 x₁) (⊑typ-wf x₂ x) wt') , PTArr x prectyp
-    graduality-syn precctx (PTLam {t = t} prec) (STLam wt)
-      with graduality-syn precctx prec wt 
-    ... | τ' , wt' , prectyp = ·∀ t τ' , STLam wt' , PTForall prectyp
-    graduality-syn precctx (PNEHole prec holenew) (SNEHole x wt) 
-      with graduality-syn precctx prec wt 
-    ... | τ' , wt' , prectyp = ⦇-⦈ , SNEHole holenew wt' , PTHole
-    graduality-syn precctx (PAp prec prec₁ disj) (SAp x syn x₁ ana) 
-      with graduality-syn precctx prec syn
-    ... | τ' , wt' , prectyp 
-      with ⊑typ-▸arr x₁ prectyp 
-    ... | τ1' , τ2' , match , prec1' , prec2' = τ2' , SAp disj wt' match (graduality-ana precctx prec1' prec₁ ana) , prec2'
-    graduality-syn precctx (PTAp {τ2 = τ2} prec x) (STAp {t = t} x₁ wt x₂ x₃) rewrite (sym x₃) 
-      with graduality-syn precctx prec wt 
-    ... | τ' , wt' , prectyp 
-      with ⊑typ-▸forall x₂ prectyp 
-    ... | τ'' , match , prec' = Typ[ τ2 / t ] τ'' , STAp (⊑typ-wf x₁ x) wt' match refl , ⊑typ-Typsubst x prec'
- 
+      (Γ ⊢ e => τ) →
+      Σ[ τ' ∈ htyp ] ((Γ' ⊢ e' => τ') × (τ ⊑t τ'))
+    graduality-syn precc PEHole syn = ⦇-⦈ , SEHole , PTHole
+    graduality-syn precc PConst SConst = b , SConst , PTBase
+    graduality-syn precc PVar (SVar inctx) with ⊑c-var inctx precc
+    ... | τ' , inctx' , prect = τ' , SVar inctx' , prect
+    graduality-syn {e' = e' ·: τ'} precc (PAsc prec prect) (SAsc wf ana) 
+      = τ' , (SAsc (wf-⊑t wf precc prect) (graduality-ana precc prect prec ana)) , prect 
+    graduality-syn precc (PLam2 prec prect) (SLam wf syn) with graduality-syn (PCVar prect precc) prec syn 
+    ... | τ' , syn' , prect' = _ , SLam (wf-⊑t wf precc prect) syn' , PTArr prect prect'
+    graduality-syn precc (PTLam prec) (STLam syn) with graduality-syn (PCTVar precc) prec syn 
+    ... | τ' , syn' , prect' = _ , STLam syn' , PTForall prect'
+    graduality-syn precc (PNEHole prec) (SNEHole syn) with graduality-syn precc prec syn 
+    ... | τ' , syn' , prect' = _ , SNEHole syn' , PTHole
+    graduality-syn precc (PAp prec1 prec2) (SAp syn meet ana) with graduality-syn precc prec1 syn
+    ... | τ' , wt' , prect with ⊑t-⊓ prect (⊑t-refl _) meet 
+    ... | .(_ ==> _) , meet' , PTArr prect' prect'' = _ ,  SAp wt' meet' (graduality-ana precc prect' prec2 ana) , prect''
+    graduality-syn precc (PTAp {τ2 = τ2} prec prect) (STAp wf syn meet subst) rewrite (sym subst) with graduality-syn precc prec syn 
+    ... | τ' , syn' , prect' with ⊑t-⊓ prect' (⊑t-refl _) meet
+    ... | .(·∀ _) , meet' , PTForall prect' = _ , STAp (wf-⊑t wf precc prect) syn' meet' refl , ⊑t-TTsub prect prect'
+
   graduality1 : 
     ∀{e e' τ} →     
     (e ⊑ e') →
-    (∅ , ∅ ⊢ e => τ) →
-    Σ[ τ' ∈ htyp ] ((∅ , ∅ ⊢ e' => τ') × (τ ⊑typ τ'))
-  graduality1 prec wt = graduality-syn ((λ x ()) , (λ x → refl) , (λ x → refl)) prec wt  
+    (∅ ⊢ e => τ) → 
+    Σ[ τ' ∈ htyp ] ((∅ ⊢ e' => τ') × (τ ⊑t τ'))
+  graduality1 prec wt = graduality-syn PCEmpty prec wt
 
-  graduality-elab-ana : 
-    ∀{e e' τ1 τ2 τ1' Γ Γ' Θ d Δ} →     
-    (Γ ⊑ctx Γ') →
-    (τ1 ⊑typ τ1') →
-    (e ⊑ e') →
-    (Θ , Γ ⊢ e ⇐ τ1 ~> d :: τ2 ⊣ Δ) →
-    Σ[ d' ∈ ihexp ] Σ[ τ2' ∈ htyp ] Σ[ Δ' ∈ hctx ] ((Θ , Γ' ⊢ e' ⇐ τ1' ~> d' :: τ2' ⊣ Δ') × (d ⊑i d') × (τ2 ⊑typ τ2'))
-  graduality-elab-ana = {!   !}
+  hole-or-not : (e : hexp) → ((e == ⦇-⦈) + ( Σ[ e' ∈ hexp ] (e == ⦇⌜ e' ⌟⦈) ) + ((e ≠ ⦇-⦈) × ((e' : hexp) → e ≠ ⦇⌜ e' ⌟⦈)))
+  hole-or-not c = Inr (Inr ((λ ()) , (λ x ())))
+  hole-or-not (e ·: x) = Inr (Inr ((λ ()) , (λ x ())))
+  hole-or-not (X x) = Inr (Inr ((λ ()) , (λ x ())))
+  hole-or-not (·λ e) = Inr (Inr ((λ ()) , (λ x ())))
+  hole-or-not (·λ[ x ] e) = Inr (Inr ((λ ()) , (λ x ())))
+  hole-or-not (·Λ e) = Inr (Inr ((λ ()) , (λ x ())))
+  hole-or-not ⦇-⦈ = Inl refl
+  hole-or-not ⦇⌜ e ⌟⦈ = Inr (Inl (e , refl))
+  hole-or-not (e ∘ e₁) = Inr (Inr ((λ ()) , (λ x ())))
+  hole-or-not (e < x >) = Inr (Inr ((λ ()) , (λ x ())))
 
-  graduality-elab-syn : 
-    ∀{e e' Γ Γ' Θ τ d Δ} →     
-    (Γ ⊑ctx Γ') →
-    (e ⊑ e') →
-    (Θ , Γ ⊢ e ⇒ τ ~> d ⊣ Δ) →
-    Σ[ τ' ∈ htyp ] Σ[ d' ∈ ihexp ] Σ[ Δ' ∈ hctx ] ((Θ , Γ' ⊢ e' ⇒ τ' ~> d' ⊣ Δ') × (τ ⊑typ τ') × (d ⊑i d'))
-  graduality-elab-syn {Γ' = Γ'} {Θ = Θ} precctx (PEHole {u = u}) elab = ⦇-⦈ , ⦇-⦈⟨ u , TypId Θ , Id Γ' ⟩ , ■ (u , Θ , Γ' , ⦇-⦈) , ESEHole , PTHole , PIEHole
-  graduality-elab-syn precctx PConst ESConst = b , c , ∅ , ESConst , PTBase , PIConst
-  graduality-elab-syn precctx PVar (ESVar inctx) with ⊑ctx-var inctx precctx
-  ... | τ' , inctx' , prectyp = _ , _ , _ , ESVar inctx' , prectyp , PIVar
-  graduality-elab-syn precctx (PAsc prec x) (ESAsc wf ana) with graduality-elab-ana precctx x prec ana 
-  ... | d' , τ2' , Δ' , ana' , prec' , prectyp = _ , _ , _ , ESAsc (⊑typ-wf wf x) ana' , x , PICast prec' prectyp x
-  graduality-elab-syn ( precctx , apt1 , apt2 ) (PLam2 prec x) (ESLam apt wf elab) with graduality-elab-syn (⊑ctx-entend ( precctx , apt1 , apt2 ) x) prec elab 
-  ... | τ' , d' , Δ' , elab' , prectyp , prec' = _ , _ , _ , ESLam (apt1 apt) (⊑typ-wf wf x) elab' , PTArr x prectyp , PILam prec' x
-  graduality-elab-syn precctx (PTLam prec) (ESTLam elab) with graduality-elab-syn precctx prec elab 
-  ... | τ' , d' , Δ' , elab' , prectyp , prec' = _ , _ , _ , ESTLam elab' , PTForall prectyp , PITLam prec'
-  graduality-elab-syn precctx (PNEHole prec x) (ESNEHole disj elab) with graduality-elab-syn precctx prec elab 
-  ... | τ' , d' , Δ' , elab' , prectyp , prec' = _ , _ , _ , ESNEHole {!   !} elab' , PTHole , {! PINEHole  !}
-  graduality-elab-syn precctx (PAp prec prec₁ x) (ESAp x₁ x₂ x₃ x₄ x₅ x₆) = {!   !}
-  graduality-elab-syn precctx (PTAp prec x) (ESTAp x₁ x₂ x₃ x₄ x₅) = {!   !}
- 
-  graduality2 : 
-    ∀{e e' τ v} →     
-    (e ⊑ e') →
-    (∅ , ∅ ⊢ e => τ) →
-    (e ⇓ v) → 
-    (v boxedval) → 
-    Σ[ v' ∈ ihexp ] ((e' ⇓ v') × (v' boxedval) × (v ⊑i v'))
-  graduality2 prec wt conv bv = {!   !} 
+  -- mutual 
+      
+  --   graduality-elab-ana : 
+  --     ∀{e e' τ1 τ2 τ1' Γ Γ' d} →     
+  --     (⊢ Γ ctxwf) → 
+  --     (Γ ⊢ τ1 wf) → 
+  --     (Γ ⊑c Γ') →
+  --     (τ1 ⊑t τ1') →
+  --     (e ⊑ e') →
+  --     (Γ ⊢ e ⇐ τ1 ~> d :: τ2) →
+  --     Σ[ d' ∈ ihexp ] Σ[ τ2' ∈ htyp ] ((Γ' ⊢ e' ⇐ τ1' ~> d' :: τ2') × (Γ , Γ' ⊢ d ⊑i d') × (τ2 ⊑t τ2'))
+  --   graduality-elab-ana {e' = e'} ctxwf wf precc prect prec (EASubsume neq1 neq2 syn meet) with hole-or-not e' | ⊓-lb meet
+  --   graduality-elab-ana ctxwf wf precc prect prec (EASubsume neq1 neq2 syn meet) | Inl refl | prect1 , prect2 = 
+  --     _ , _ , EAEHole , PIEHole (TACast (typed-elaboration-syn ctxwf syn) (wf-⊓ meet wf (wf-elab-syn ctxwf syn)) (~sym (⊑t-consist prect2))) (⊑t-trans prect1 prect) , ⊑t-trans prect1 prect
+  --   graduality-elab-ana ctxwf wf precc prect prec (EASubsume neq1 neq2 (ESNEHole syn) meet) | Inr (Inl (e' , refl)) | prect' , _ = abort (neq2 _ refl)
+  --   graduality-elab-ana ctxwf wf precc prect prec (EASubsume neq1 neq2 syn meet) | Inr (Inr (neq3 , neq4)) | prect2 , prect3 with graduality-elab-syn ctxwf precc prec syn 
+  --   graduality-elab-ana ctxwf wf precc prect prec (EASubsume neq1 neq2 syn meet) | Inr (Inr (neq3 , neq4)) | prect2 , prect3 | τ2' , d' , syn' , prect1 , prec' with ⊑t-⊓ prect prect1 meet
+  --   ... | τ3' , meet' , prect4  = _ , _ , EASubsume neq3 neq4 syn' meet' , PICast prec' prect1 prect4 , prect4
+  --   graduality-elab-ana ctxwf wf precc prect PEHole ana = let prect' = ⊑t-trans (⊑t-ana ana) prect in _ , _ , EAEHole , PIEHole (typed-elaboration-ana ctxwf wf ana) prect' , prect'
+  --   graduality-elab-ana ctxwf wf precc prect (PLam1 prec) (EALam meet ana) with ⊑t-⊓ prect (⊑t-refl _) meet | wf-⊓ meet wf (WFArr WFHole WFHole)
+  --   ... | _ , prect1 , PTArr prect2 prect3 | WFArr wf1 wf2 with graduality-elab-ana (CtxWFExtend wf1 ctxwf) wf2 (PCExtend prect2 precc) prect3 prec ana 
+  --   ... | _ , _ , ana' , prec' , prect' = _ , _ , EALam prect1 ana' , PILam prec' prect2 , PTArr prect2 prect'
+  --   graduality-elab-ana ctxwf wf precc prect (PTLam prec) (EATLam neq1 neq2 meet ana) with ⊑t-⊓ prect (⊑t-refl _) meet | wf-⊓ meet wf (WFForall WFHole)
+  --   graduality-elab-ana ctxwf wf precc prect (PTLam prec) (EATLam neq1 neq2 meet ana) | (·∀ τ') , meet' , PTForall prect1 | WFForall wf' with graduality-elab-ana (weakening-ctx ctxwf) wf' precc prect1 prec ana
+  --   graduality-elab-ana {e' = ·Λ e'} ctxwf wf precc prect (PTLam prec) (EATLam neq1 neq2 meet ana) | (·∀ τ') , meet' , PTForall prect1 | wf' | thing , thing2 , ana' , prec' , prect2 with hole-or-not e'
+  --   graduality-elab-ana ctxwf wf precc prect (PTLam prec) (EATLam neq1 neq2 meet ana) | ·∀ τ' , meet2 , PTForall prect1 | WFForall wf' | thing , thing2 , ana' , prec' , prect2 | Inl refl = 
+  --     let prect3 = ⊑t-trans (PTForall (⊑t-ana ana)) (⊑t-⊓-fun prect (PTForall PTHole) meet meet2) in 
+  --     _ , _ , EASubsume (λ ()) (λ e' ()) (ESTLam ESEHole) meet2 , PIAddCast (PITLam (PIEHole (typed-elaboration-ana (weakening-ctx ctxwf) wf' ana) PTHole)) (TATLam (typed-elaboration-ana (weakening-ctx ctxwf) wf' ana)) (PTForall PTHole) prect3 , prect3
+  --   graduality-elab-ana ctxwf wf precc prect (PTLam prec) (EATLam neq1 neq2 meet ana) | _ , meet2 , PTForall _ | WFForall wf' | _ , thing2 , EASubsume _ neq _ _ , prec' , prect2 | Inr (Inl (e' , refl)) = abort (neq e' refl)
+  --   graduality-elab-ana ctxwf wf precc prect (PTLam prec) (EATLam neq1 neq2 meet ana) | ·∀ _ , meet2 , PTForall _ | WFForall wf' | _ , _ , EANEHole x , PINEHole prec' x₁ , prect2 | Inr (Inl (e' , refl)) =
+  --     _ , _ , (EASubsume (λ ()) (λ e' ()) (ESTLam (ESNEHole x)) meet2) , PIAddCast (PITLam (PINEHole prec' PTHole)) (TATLam (typed-elaboration-ana (weakening-ctx ctxwf) wf' ana)) (PTForall PTHole) (PTForall prect2) , PTForall prect2
+  --   graduality-elab-ana ctxwf wf precc prect (PTLam prec) (EATLam neq1 neq2 meet ana) | ·∀ _ , meet2 , PTForall _ | WFForall wf' | _ , _ , EANEHole x , PIRemoveCast prec' TANEHole x₂ x₃ , prect2 | Inr (Inl (e' , refl)) = 
+  --     _ , _ , (EASubsume (λ ()) (λ e' ()) (ESTLam (ESNEHole x)) meet2) , PIAddCast (PITLam (PIRemoveCast (h1 prec') TANEHole PTHole PTHole)) (TATLam (typed-elaboration-ana (weakening-ctx ctxwf) wf' ana)) (PTForall PTHole) (PTForall prect2) , PTForall prect2
+  --       where 
+  --         h1 : ∀{Θ Γ Γ' d1 d2 τ} → Θ , Γ , Γ' ⊢ d1 ⊑i ⦇⌜ d2 ⌟⦈⟨ τ ⟩ → Θ , Γ , Γ' ⊢ d1 ⊑i ⦇⌜ d2 ⌟⦈⟨ ⦇-⦈ ⟩
+  --         h1 (PINEHole prec x) = PINEHole prec PTHole
+  --         h1 (PIRemoveCast prec _ _ _) = PIRemoveCast (h1 prec) TANEHole PTHole PTHole
+  --         h1 (PIBlame _ _) = PIBlame TANEHole PTHole
+  --   ... | Inr (Inr (neq3 , neq4)) = _ , _ , EATLam neq3 neq4 meet' ana' , PITLam prec' , PTForall prect2
+  --   graduality-elab-ana ctxwf wf precc prect (PNEHole prec) (EANEHole syn) with graduality-elab-syn ctxwf precc prec syn 
+  --   ... | τ' , d' , syn' , prect' , prec' = _ , _ , EANEHole syn' , PINEHole prec' prect , prect
+
+  --   graduality-elab-syn : 
+  --     ∀{e e' Γ Γ' Θ τ d} →     
+  --     (⊢ Γ ctxwf) → 
+  --     (Γ ⊑c Γ') →
+  --     (e ⊑ e') →
+  --     (Γ ⊢ e ⇒ τ ~> d) →
+  --     Σ[ τ' ∈ htyp ] Σ[ d' ∈ ihexp ] ((Γ' ⊢ e' ⇒ τ' ~> d') × (τ ⊑t τ') × (Γ , Γ' ⊢ d ⊑i d'))
+  --   graduality-elab-syn ctxwf precc PEHole elab = ⦇-⦈ , ⦇-⦈⟨ ⦇-⦈ ⟩ , ESEHole , PTHole , PIEHole (typed-elaboration-syn ctxwf elab) PTHole
+  --   graduality-elab-syn ctxwf precc PConst ESConst = b , c , ESConst , PTBase , PIConst
+  --   graduality-elab-syn ctxwf precc PVar (ESVar inctx) with ⊑c-var inctx precc
+  --   ... | τ' , inctx' , prect = _ , _ , ESVar inctx' , prect , PIVar
+  --   graduality-elab-syn ctxwf precc (PAsc prec x) (ESAsc wf ana) with graduality-elab-ana ctxwf wf precc x prec ana 
+  --   ... | d' , τ2' , ana' , prec' , prect = _ , _ , ESAsc (wf-⊑t wf x) ana' , x , PICast prec' prect x
+  --   graduality-elab-syn ctxwf precc (PLam2 prec x) (ESLam wf elab) with graduality-elab-syn (CtxWFExtend wf ctxwf) (PCExtend x precc) prec elab 
+  --   ... | τ' , d' , elab' , prect , prec' = _ , _ , ESLam (wf-⊑t wf x) elab' , PTArr x prect , PILam prec' x
+  --   graduality-elab-syn ctxwf precc (PTLam prec) (ESTLam elab) with graduality-elab-syn (weakening-ctx ctxwf) precc prec elab 
+  --   ... | τ' , d' , elab' , prect , prec' = _ , _ , ESTLam elab' , PTForall prect , PITLam prec'
+  --   graduality-elab-syn ctxwf precc (PNEHole prec) (ESNEHole elab) with graduality-elab-syn ctxwf precc prec elab 
+  --   ... | τ' , d' , elab' , prect , prec' = _ , _ , ESNEHole elab' , PTHole , PINEHole prec' PTHole
+  --   graduality-elab-syn ctxwf precc (PAp prec1 prec2) (ESAp syn meet ana1 ana2) with graduality-syn precc prec1 syn 
+  --   ... | τ1' , syn' , prec1' with ⊑t-⊓ prec1' (⊑t-refl _) meet | wf-⊓ meet (wf-syn ctxwf syn) (WFArr WFHole WFHole)
+  --   ... | (_ ==> _) , meet' , PTArr prec3 prec4 | WFArr wf1 wf2 with graduality-elab-ana ctxwf (WFArr wf1 wf2) precc (PTArr prec3 prec4) prec1 ana1 
+  --   ... | d1' , τ1''' , ana1' , prec5 , prec6 with graduality-elab-ana ctxwf wf1 precc prec3 prec2 ana2 
+  --   ... | d2' , τ2''' , ana2' , prec7 , prec8 = 
+  --     _ , _ , (ESAp syn' meet' ana1' ana2') , prec4 , PIAp (PICast prec5 prec6 (PTArr prec3 prec4)) (PICast prec7 prec8 prec3)
+  --   graduality-elab-syn ctxwf precc (PTAp prec prect) (ESTAp wf syn meet ana sub) with graduality-syn precc prec syn 
+  --   ... | τ4' , syn' , prec1 with ⊑t-⊓ prec1 (⊑t-refl _) meet
+  --   ... | (·∀ τ4'') , meet' , PTForall prec2 with graduality-elab-ana ctxwf (wf-⊓ meet (wf-syn ctxwf syn) (WFForall WFHole)) precc (PTForall prec2) prec ana 
+  --   ... | d' , τ2'' , ana' , prec3 , prec4 rewrite (sym sub) with ⊑t-⊓-fun prec1 (PTForall PTHole) meet meet' 
+  --   ... | PTForall prec5 = _ , _ , ESTAp (wf-⊑t wf prect) syn' meet' ana' refl , 
+  --     ⊑t-TTsub prect prec5 , PITAp (PICast prec3 prec4 (PTForall prec2)) prect
+   
+  --   graduality-type-assign : 
+  --     ∀{d d' Γ Γ' Θ τ} →     
+  --     (Θ ⊢ Γ ctxwf) → 
+  --     (Γ ⊑c Γ') →
+  --     (Θ , Γ , Γ' ⊢ d ⊑i d') →
+  --     (Θ , Γ ⊢ d :: τ) →
+  --     Σ[ τ' ∈ htyp ] ((Θ , Γ' ⊢ d' :: τ') × (τ ⊑t τ'))
+  --   graduality-type-assign ctxwf precc PIConst TAConst = b , TAConst , PTBase 
+  --   graduality-type-assign ctxwf precc PIVar (TAVar inctx) with ⊑c-var inctx precc 
+  --   ... | τ , inctx' , prec = τ , TAVar inctx' , prec
+  --   graduality-type-assign ctxwf precc (PIEHole wt1 prec) wt2 rewrite type-assignment-unicity wt1 wt2 = _ , TAEHole , prec
+  --   graduality-type-assign ctxwf precc (PILam prec x) (TALam x₁ wt) = {!   !}
+  --   graduality-type-assign ctxwf precc (PITLam prec) (TATLam wt) = {!   !}
+  --   graduality-type-assign ctxwf precc (PINEHole prec x) TANEHole = {!   !}
+  --   graduality-type-assign ctxwf precc (PIAp prec prec₁) (TAAp wt wt₁) = {!   !}
+  --   graduality-type-assign ctxwf precc (PITAp prec x) (TATAp x₁ wt x₂) = {!   !}
+  --   graduality-type-assign ctxwf precc (PICast prec x x₁) (TACast wt x₂ x₃) = {!   !}
+  --   graduality-type-assign ctxwf precc (PIFailedCast prec x x₁) (TAFailedCast wt x₂ x₃ x₄) = {!   !}
+  --   graduality-type-assign ctxwf precc (PIRemoveCast prec x x₁ x₂) (TACast wt x₃ x₄) = {!   !}
+  --   graduality-type-assign ctxwf precc (PIAddCast prec wt1 prec1 prec2) wt2 with graduality-type-assign ctxwf precc prec wt2 
+  --   ... | τ , wt3 , prec3 = _ , {!   !} , {!   !}
+  --   graduality-type-assign ctxwf precc (PIBlame wt1 prect) (TAFailedCast wt2 gnd1 gnd2 neq) = _ , wt1 , prect

@@ -1,37 +1,49 @@
 open import Nat
 open import Prelude
+open import core-type
 open import core
-open import contexts
+open import lemmas-meet
 
 module type-assignment-unicity where
 
+  context-unicity : ∀{Γ n τ τ'} → 
+    n , τ ∈ Γ → 
+    n , τ' ∈ Γ → 
+    τ == τ'
+  context-unicity (InCtxSkip inctx1) (InCtxSkip inctx2) rewrite context-unicity inctx1 inctx2 = refl
+  context-unicity InCtxZ InCtxZ = refl
+  context-unicity (InCtx1+ inctx1) (InCtx1+ inctx2) = context-unicity inctx1 inctx2
+
+  synth-unicity : ∀{Γ d τ' τ} →
+    Γ ⊢ d => τ →
+    Γ ⊢ d => τ' →
+    τ == τ'
+  synth-unicity SConst SConst = refl
+  synth-unicity (SAsc x x₁) (SAsc x₂ x₃) = refl
+  synth-unicity (SVar x) (SVar x₁) = context-unicity x x₁
+  synth-unicity (SAp syn1 x x₁) (SAp syn2 x₂ x₃) rewrite synth-unicity syn1 syn2 with ⊓-unicity x x₂
+  ... | refl = refl
+  synth-unicity SEHole SEHole = refl
+  synth-unicity (SNEHole syn1) (SNEHole syn2) = refl
+  synth-unicity (SLam x syn1) (SLam x₁ syn2) rewrite synth-unicity syn1 syn2 = refl
+  synth-unicity (STLam syn1) (STLam syn2) rewrite synth-unicity syn1 syn2 = refl
+  synth-unicity (STAp x syn1 x₁ refl) (STAp x₃ syn2 x₄ refl) rewrite synth-unicity syn1 syn2 with ⊓-unicity x₁ x₄
+  ... | refl = refl
+
   -- type assignment only assigns one type
-  type-assignment-unicity : {Γ : tctx} {d : ihexp} {τ' τ : htyp} {Δ : hctx} {Θ : typctx} →
-                              Δ , Θ , Γ ⊢ d :: τ →
-                              Δ , Θ , Γ ⊢ d :: τ' →
-                              τ == τ'
+  type-assignment-unicity : ∀{Γ d τ' τ} →
+    Γ ⊢ d :: τ →
+    Γ ⊢ d :: τ' →
+    τ == τ'
   type-assignment-unicity TAConst TAConst = refl
-  type-assignment-unicity {Γ = Γ} (TAVar x₁) (TAVar x₂) = ctxunicity {Γ = Γ} x₁ x₂
-  type-assignment-unicity (TALam _ _ d1) (TALam _ _ d2)
-    with type-assignment-unicity d1 d2
+  type-assignment-unicity (TAVar inctx1) (TAVar inctx2) = context-unicity inctx1 inctx2
+  type-assignment-unicity (TALam _ wt1) (TALam _ wt2) rewrite type-assignment-unicity wt1 wt2 = refl
+  type-assignment-unicity (TATLam wt1) (TATLam wt2) rewrite type-assignment-unicity wt1 wt2 = refl
+  type-assignment-unicity (TAAp wt1 _) (TAAp wt2 _) with type-assignment-unicity wt1 wt2
   ... | refl = refl
-  type-assignment-unicity (TATLam apt1 d1) (TATLam apt2 d2)
-    with type-assignment-unicity d1 d2
-  ... | refl = refl
-  type-assignment-unicity (TAAp x x₁ xalpha) (TAAp y y₁ yalpha)
-    with type-assignment-unicity x y
-  ... | refl = refl
-  type-assignment-unicity (TATAp _ x eq1) (TATAp _ y eq2) with type-assignment-unicity x y
+  type-assignment-unicity (TATAp _ wt1 eq1) (TATAp _ wt2 eq2) with type-assignment-unicity wt1 wt2
   ... | refl rewrite eq1 = eq2
-  type-assignment-unicity (TAEHole {Δ = Δ} x y eq1 _) (TAEHole x₁ x₂ eq2 _)
-    with ctxunicity {Γ = Δ} x x₁
-  ... | refl rewrite eq1 | eq2 = refl
-  type-assignment-unicity (TANEHole {Δ = Δ} x d1 y eq1 _) (TANEHole x₁ d2 x₂ eq2 _)
-    with ctxunicity {Γ = Δ} x₁ x
-  ... | refl rewrite eq1 | eq2 = refl
-  type-assignment-unicity (TACast d1 _ x alpha1) (TACast d2 _ x₁ alpha2)
-    with type-assignment-unicity d1 d2
-  ... | refl = refl
-  type-assignment-unicity (TAFailedCast x x₁ x₂ x₃ _) (TAFailedCast y x₄ x₅ x₆ _)
-    with type-assignment-unicity x y
-  ... | refl = refl
+  type-assignment-unicity TAEHole TAEHole = refl
+  type-assignment-unicity (TANEHole _) (TANEHole _) = refl
+  type-assignment-unicity (TACast wt1 _ _) (TACast wt2 _ _) rewrite type-assignment-unicity wt1 wt2 = refl
+  type-assignment-unicity (TAFailedCast wt1 _ _ _) (TAFailedCast wt2 _ _ _) rewrite type-assignment-unicity wt1 wt2 = refl

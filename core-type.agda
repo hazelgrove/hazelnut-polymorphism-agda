@@ -1,7 +1,7 @@
 open import Prelude
 open import Nat
 
-module debruijn.debruijn-core-type where
+module core-type where
 
   -- types
   data htyp : Set where
