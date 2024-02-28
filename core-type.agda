@@ -102,6 +102,6 @@ module core-type where
     PCTVar : ∀{Γ Γ'} → (Γ ⊑c Γ') → ((TVar, Γ) ⊑c (TVar, Γ'))
   
   data context-counter : ctx → Nat → Nat → Set where 
-    CtxCtEmpty : context-counter ∅ Z Z 
+    CtxCtEmpty : context-counter ∅ Z Z  
     CtxCtVar : ∀{Γ n m τ} → context-counter Γ n m → context-counter (τ , Γ) (1+ n) m 
     CtxCtTVar : ∀{Γ n m} → context-counter Γ n m → context-counter (TVar, Γ) n (1+ m) 

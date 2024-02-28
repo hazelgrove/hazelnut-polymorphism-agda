@@ -35,15 +35,15 @@ module lemmas-index where
   ↑dZ t1 t2 (·Λ d) rewrite ↑dZ t1 (1+ t2) d = refl
   ↑dZ t1 t2 (X x) rewrite ↑NatZ t1 x = refl
   
-  ↑Natcompose : (t i x : Nat) → ↑Nat t 1 (↑Nat t i x) == ↑Nat t (1+ i) x
-  ↑Natcompose Z Z x = refl
-  ↑Natcompose Z (1+ i) x = refl
-  ↑Natcompose (1+ t) i Z = refl
-  ↑Natcompose (1+ t) i (1+ x) rewrite ↑Natcompose t i x = refl
+  ↑Nat-compose : (t i x : Nat) → ↑Nat t 1 (↑Nat t i x) == ↑Nat t (1+ i) x
+  ↑Nat-compose Z Z x = refl
+  ↑Nat-compose Z (1+ i) x = refl
+  ↑Nat-compose (1+ t) i Z = refl
+  ↑Nat-compose (1+ t) i (1+ x) rewrite ↑Nat-compose t i x = refl
 
   ↑compose : (t i : Nat) → (τ : htyp) → ↑ t 1 (↑ t i τ) == (↑ t (1+ i) τ)
   ↑compose _ _ b = refl
-  ↑compose t i (T x) rewrite ↑Natcompose t i x = refl
+  ↑compose t i (T x) rewrite ↑Nat-compose t i x = refl
   ↑compose _ _ ⦇-⦈ = refl
   ↑compose t i (τ ==> τ₁) rewrite ↑compose t i τ rewrite ↑compose t i τ₁ = refl
   ↑compose t i (·∀ τ) rewrite ↑compose (1+ t) i τ = refl
@@ -53,17 +53,26 @@ module lemmas-index where
   ↑ctx-compose t i (x , Γ) rewrite ↑compose t i x rewrite ↑ctx-compose t i Γ = refl
   ↑ctx-compose t i (TVar, Γ) rewrite ↑ctx-compose (1+ t) i Γ = refl
 
-  -- ↓↑Nat-invert : (t x : Nat) → ↓Nat t 1 (↑Nat t 1 x) == x
-  -- ↓↑Nat-invert Z x = refl 
-  -- ↓↑Nat-invert (1+ t) Z = refl
-  -- ↓↑Nat-invert (1+ t) (1+ x) rewrite ↓↑Nat-invert t x = refl
+  ↑Nat-incr : (i x : Nat) → ↑Nat Z i (1+ x) == 1+ (↑Nat Z i x)
+  ↑Nat-incr Z x = refl
+  ↑Nat-incr (1+ i) x rewrite ↑Nat-incr i x = refl
   
-  -- ↓↑invert : (t : Nat) → (τ : htyp) → ↓ t 1 (↑ t 1 τ) == τ
-  -- ↓↑invert t b = refl 
-  -- ↓↑invert t (T x) rewrite ↓↑Nat-invert t x = refl
-  -- ↓↑invert t ⦇-⦈ = refl
-  -- ↓↑invert t (τ ==> τ₁) rewrite ↓↑invert t τ rewrite ↓↑invert t τ₁ = refl
-  -- ↓↑invert t (·∀ τ) rewrite ↓↑invert (1+ t) τ = refl
+  ↑Nat-comm : (t i j x : Nat) → ↑Nat t i (↑Nat t j x) == ↑Nat t j (↑Nat t i x)
+  ↑Nat-comm Z Z j x = refl
+  ↑Nat-comm Z (1+ i) Z x = refl
+  ↑Nat-comm Z (1+ i) (1+ j) x 
+    rewrite ↑Nat-incr i (↑Nat Z j x) 
+    rewrite ↑Nat-incr j (↑Nat Z i x) 
+    rewrite ↑Nat-comm Z i j x = refl
+  ↑Nat-comm (1+ t) i j Z = refl
+  ↑Nat-comm (1+ t) i j (1+ x) rewrite ↑Nat-comm t i j x = refl
+
+  ↑comm : (t i j : Nat) → (τ : htyp) → ↑ t i (↑ t j τ) == ↑ t j (↑ t i τ)
+  ↑comm t i j b = refl
+  ↑comm t i j (T x) rewrite ↑Nat-comm t i j x = refl
+  ↑comm t i j ⦇-⦈ = refl
+  ↑comm t i j (τ1 ==> τ2) rewrite ↑comm t i j τ1 rewrite ↑comm t i j τ2 = refl
+  ↑comm t i j (·∀ τ) rewrite ↑comm (1+ t) i j τ = refl 
 
   ↓↑Nat-invert : (n m x : Nat) → ↓Nat (n nat+ m) 1 (↑Nat m (n nat+ 1) x) == ↑Nat m n x
   ↓↑Nat-invert Z Z x = refl

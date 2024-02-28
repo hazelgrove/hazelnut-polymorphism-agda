@@ -17,121 +17,128 @@ open import lemmas-wf
 module typing-subst where
 
   -- TtSub section
+  
+  consist-sub : ∀{m τ1 τ2 τ3} → τ2 ~ τ3 → TTSub m τ1 τ2 ~ TTSub m τ1 τ3
+  consist-sub ConsistBase = ConsistBase
+  consist-sub {m} (ConsistVar {x}) with natEQ m x
+  ... | Inl refl = ~refl 
+  ... | Inr neq = ~refl
+  consist-sub ConsistHole1 = ConsistHole1
+  consist-sub ConsistHole2 = ConsistHole2
+  consist-sub (ConsistArr con1 con2) = ConsistArr (consist-sub con1) (consist-sub con2)
+  consist-sub (ConsistForall con) = ConsistForall (consist-sub con)
+  
+  nat-shift-miss : (t x : Nat) → t ≠ ↑Nat t 1 x
+  nat-shift-miss Z x ()
+  nat-shift-miss (1+ t) Z ()
+  nat-shift-miss (1+ t) (1+ x) eq = nat-shift-miss t x (1+inj _ _ eq)
 
-  -- inctx-sub : ∀ {n m Γ τ1 τ2} → 
-  --   (n , τ2 ∈ Γ) → 
-  --   n , (TTSub m τ1 τ2) ∈ (TCtxSub m τ1 Γ)
-  -- inctx-sub InCtxZ = InCtxZ
-  -- inctx-sub (InCtx1+ inctx) = InCtx1+ (inctx-sub inctx)
+  sub-shift-miss : (t : Nat) → (τ' τ : htyp) → TTSub t τ' (↑ t 1 τ) == τ
+  sub-shift-miss t τ' b = refl
+  sub-shift-miss t τ' (T x) with natEQ t (↑Nat t 1 x) 
+  ... | Inl eq = abort (nat-shift-miss _ _ eq) 
+  ... | Inr neq rewrite ↓↑Nat-invert Z t x rewrite ↑NatZ t x = refl
+  sub-shift-miss t τ' ⦇-⦈ = refl
+  sub-shift-miss t τ' (τ1 ==> τ2) rewrite sub-shift-miss t τ' τ1 rewrite sub-shift-miss t τ' τ2 = refl
+  sub-shift-miss t τ' (·∀ τ) rewrite sub-shift-miss (1+ t) τ' τ = refl
 
-  -- -- helper-weaken : ∀{Θ n τ} → Γ ⊢ τ wf → 1+ (n nat+ Θ) ⊢ τ wf
-  -- -- helper-weaken {Θ = Θ} {n = n} wf with weakening-wf-var-n {Θ = 1+ Θ} {n = n} wf
-  -- -- ... | result rewrite nat+1+ n Θ = result
+  some-equation-nat : (n m x : Nat) → ↓Nat (1+ n nat+ m) 1 (↑Nat n 1 x) == ↑Nat n 1 (↓Nat (n nat+ m) 1 x)
+  some-equation-nat Z m x = refl
+  some-equation-nat (1+ n) m Z = refl
+  some-equation-nat (1+ n) m (1+ x) rewrite some-equation-nat n m x = refl
 
-  -- wt-TtSub-helper : ∀{Θ Γ d n τ1 τ2} →
-  --   (1+ (n nat+ Θ) ⊢ Γ ctxwf) → 
-  --   (Θ ⊢ τ1 wf) → 
-  --   (1+ (n nat+ Θ) , Γ ⊢ d :: τ2) → 
-  --   ((n nat+ Θ) , TCtxSub n τ1 Γ ⊢ TtSub n τ1 d :: TTSub n τ1 τ2)
-  -- wt-TtSub-helper ctxwf wf TAConst = TAConst
-  -- wt-TtSub-helper ctxwf wf (TAVar inctx) = TAVar (inctx-sub inctx)
-  -- wt-TtSub-helper {n = Z} ctxwf wf1 (TALam wf2 wt) = TALam (wf-TTSub wf1 wf2) (wt-TtSub-helper (CtxWFVar wf2 ctxwf) wf1 wt)
-  -- wt-TtSub-helper {Θ = Θ} {n = n} ctxwf wf1 (TALam wf2 wt) with wt-TtSub-helper {n = n} (CtxWFTVar ctxwf) wf1 wt
-  -- ... | wt2 rewrite nat+1+ n Θ = TALam (wf-TTSub-helper wf1 wf2) wt2
-  -- wt-TtSub-helper {Θ = Θ} {n = n} {τ1 = τ1} ctxwf wf (TATLam wt) with wt-TtSub-helper {Θ = Θ} {n = 1+ n} {!   !} wf wt
-  -- ... | result rewrite sym (↑compose Z (1+ n) τ1) rewrite nat+1+ n Θ = TATLam {! result  !}
-  -- wt-TtSub-helper ctxwf wf (TAAp wt1 wt2) = TAAp (wt-TtSub-helper ctxwf wf wt1) (wt-TtSub-helper ctxwf wf wt2)
-  -- wt-TtSub-helper {Θ = Θ} {n = n} {τ1 = τ1} ctxwf wf (TATAp {τ1 = τ2} {τ2 = τ3} x wt refl) with ? --SubSub {n = n} {τ1 = τ1} {τ2 = τ2} {τ3 = τ3} 
-  -- ... | result rewrite sym (↑compose Z (1+ n) τ1) = TATAp (wf-TTSub-helper wf x) (wt-TtSub-helper ctxwf wf wt) (sym result)
-  -- wt-TtSub-helper ctxwf wf (TAEHole x) = TAEHole (wf-TTSub-helper wf x)
-  -- wt-TtSub-helper ctxwf wf (TANEHole x wt) = TANEHole (wf-TTSub-helper wf x) (wt-TtSub-helper ctxwf wf wt)
-  -- wt-TtSub-helper {n = n} ctxwf wf (TACast wt x x₁) = TACast (wt-TtSub-helper ctxwf wf wt) (wf-TTSub-helper wf x) (~TTSub-helper (weakening-wf-var-n {n = n} (wf-ta ctxwf wt)) (weakening-wf-var-n x) x₁) 
-  -- wt-TtSub-helper ctxwf wf (TAFailedCast wt GBase GBase incon) = abort (incon ConsistBase)
-  -- wt-TtSub-helper ctxwf wf (TAFailedCast wt GArr GArr incon) = abort (incon (ConsistArr ConsistHole1 ConsistHole1))
-  -- wt-TtSub-helper ctxwf wf (TAFailedCast wt GForall GForall incon) = abort (incon (ConsistForall ConsistHole1))
-  -- wt-TtSub-helper ctxwf wf (TAFailedCast wt GBase GArr incon) = TAFailedCast (wt-TtSub-helper ctxwf wf wt) GBase GArr incon
-  -- wt-TtSub-helper ctxwf wf (TAFailedCast wt GBase GForall incon) = TAFailedCast (wt-TtSub-helper ctxwf wf wt) GBase GForall incon
-  -- wt-TtSub-helper ctxwf wf (TAFailedCast wt GArr GBase incon) = TAFailedCast (wt-TtSub-helper ctxwf wf wt) GArr GBase incon
-  -- wt-TtSub-helper ctxwf wf (TAFailedCast wt GArr GForall incon) = TAFailedCast (wt-TtSub-helper ctxwf wf wt) GArr GForall incon
-  -- wt-TtSub-helper ctxwf wf (TAFailedCast wt GForall GBase incon) = TAFailedCast (wt-TtSub-helper ctxwf wf wt) GForall GBase incon
-  -- wt-TtSub-helper ctxwf wf (TAFailedCast wt GForall GArr incon) = TAFailedCast (wt-TtSub-helper ctxwf wf wt) GForall GArr incon
+  some-equation : (n m : Nat) → (τ : htyp) → ↓ (1+ n nat+ m) 1 (↑ n 1 τ) == ↑ n 1 (↓ (n nat+ m) 1 τ)
+  some-equation n m b = refl
+  some-equation n m (T x) rewrite some-equation-nat n m x = refl
+  some-equation n m ⦇-⦈ = refl
+  some-equation n m (τ1 ==> τ2) rewrite some-equation n m τ1 rewrite some-equation n m τ2 = refl
+  some-equation n m (·∀ τ) rewrite some-equation (1+ n) m τ = refl
 
-  -- wt-TtSub : ∀{Θ Γ d τ1 τ2} →
-  --   (1+ Θ ⊢ Γ ctxwf) → 
-  --   (Θ ⊢ τ1 wf) → 
-  --   (1+ Θ , Γ ⊢ d :: τ2) → 
-  --   (Θ , TCtxSub Z τ1 Γ ⊢ TtSub Z τ1 d :: TTSub Z τ1 τ2)
-  -- wt-TtSub ctxwf wf wt = wt-TtSub-helper ctxwf wf wt
+  other-equation-nat : (m n x : Nat) → ↑Nat m 1 (↑Nat (m nat+ n) 1 x) == ↑Nat (1+ m nat+ n) 1 (↑Nat m 1 x)
+  other-equation-nat Z n x = refl
+  other-equation-nat (1+ m) n Z = refl
+  other-equation-nat (1+ m) n (1+ x) rewrite other-equation-nat m n x = refl
 
-  sub-shift : (t m : Nat) → (τ' τ : htyp) → ↑ t 1 (TTSub (t nat+ m) τ' τ) == TTSub (1+ (t nat+ m)) τ' (↑ t 1 τ)
-  sub-shift t m τ' b = refl
-  sub-shift t m τ' (T x) = {!   !}
-  -- with natEQ (t nat+ m) x 
-  -- ... | Inl refl = {!   !} 
-  -- ... | Inr neq = {!   !}
-  sub-shift t m τ' ⦇-⦈ = refl
-  sub-shift t m τ' (τ ==> τ₁) rewrite sub-shift t m τ' τ rewrite sub-shift t m τ' τ₁ = refl
-  sub-shift t m τ' (·∀ τ) rewrite sub-shift (1+ t) m τ' τ = refl
+  other-equation : (m n : Nat) → (τ : htyp) → ↑ m 1 (↑ (m nat+ n) 1 τ) == ↑ (1+ m nat+ n) 1 (↑ m 1 τ)
+  other-equation m n b = refl
+  other-equation m n (T x) rewrite other-equation-nat m n x = refl
+  other-equation m n ⦇-⦈ = refl
+  other-equation m n (τ1 ==> τ2) rewrite other-equation m n τ1 rewrite other-equation m n τ2 = refl
+  other-equation m n (·∀ τ) rewrite other-equation (1+ m) n τ = refl
 
-  -- note: not true as written. either induces a shift on tau1, or must assume tau1 has no fvs (which is true, where this lemmas is used)
-  inctx-sub : ∀ {n m x Γ τ1 τ2} → 
-    context-counter Γ n m → 
-    x , τ2 ∈ (Γ ctx+ (TVar, ∅)) → 
-    x , TTSub m τ1 τ2 ∈ TCtxSub m τ1 Γ
-  inctx-sub CtxCtEmpty (InCtxSkip ())
-  inctx-sub {.(1+ _)} {m} {.Z} {x₁ , Γ} (CtxCtVar ctxct) InCtxZ = InCtxZ
-  inctx-sub {.(1+ _)} {m} {.(1+ _)} {x₁ , Γ} (CtxCtVar ctxct) (InCtx1+ inctx) = InCtx1+ (inctx-sub ctxct inctx)
-  inctx-sub {n} {(1+ m)} {x} {TVar, Γ} {τ1} (CtxCtTVar ctxct) (InCtxSkip inctx) with InCtxSkip (inctx-sub {n} {m} {x} {Γ} {τ1} ctxct inctx)
-  ... | thing = {!  ?  !}
+  sub-incr : (m x : Nat) → (τ : htyp) → TTSub (1+ m) τ (T (1+ x)) == ↑ Z 1 (TTSub m τ (T x))
+  sub-incr m x τ with natEQ m x 
+  ... | Inr neq = refl
+  ... | Inl refl rewrite sym (some-equation Z m (↑ 0 (1+ m) τ)) rewrite ↑compose Z (1+ m) τ = refl 
 
-  -- example-gamma : ctx
-  -- example-gamma = (TVar, (T 3 , (T 2 , (T 2 , (T 1 , (T Z , (TVar, (TVar, (TVar, (TVar, ∅))))))))))
+  sub-shift : (n m : Nat) → (τ' τ : htyp) → TTSub (1+ n nat+ m) τ' (↑ n 1 τ) == ↑ n 1 (TTSub (n nat+ m) τ' τ)
+  sub-shift n m τ' b = refl
+  sub-shift n m τ' ⦇-⦈ = refl
+  sub-shift n m τ' (τ1 ==> τ2) rewrite sub-shift n m τ' τ1 rewrite sub-shift n m τ' τ2 = refl
+  sub-shift n m τ' (·∀ τ) rewrite sub-shift (1+ n) m τ' τ = refl
+  sub-shift Z m τ' (T x) with natEQ m x 
+  ... | Inl refl rewrite sym (↑compose Z (1+ m) τ') rewrite some-equation Z m (↑ 0 (1+ m) τ') = refl 
+  ... | Inr neq = refl
+  sub-shift (1+ n) m τ' (T Z) = refl
+  sub-shift (1+ n) m τ' (T (1+ x)) with sub-shift n m τ' (T x)
+  ... | eq 
+    rewrite sub-incr (1+ (n nat+ m)) (↑Nat n 1 x) τ' 
+    rewrite sub-incr (n nat+ m) x τ' 
+    rewrite eq = other-equation Z n _
 
-  -- example-gamma-wf : ⊢ example-gamma ctxwf
-  -- example-gamma-wf = CtxWFTVar (CtxWFVar (WFSkip  (WFSkip (WFSkip (WFSkip (WFVarS (WFVarS (WFVarS WFVarZ))))))) (CtxWFVar (WFSkip (WFSkip (WFSkip (WFVarS (WFVarS WFVarZ)))))  (CtxWFVar (WFSkip (WFSkip (WFVarS (WFVarS WFVarZ))))    (CtxWFVar (WFSkip (WFVarS WFVarZ))     (CtxWFVar WFVarZ      (CtxWFTVar (CtxWFTVar (CtxWFTVar (CtxWFTVar CtxWFEmpty)))))))))
+  inctx-subst : ∀{m τ1 n Γ τ2} → n , τ2 ∈ Γ → n , TTSub m τ1 τ2 ∈ TCtxSub m τ1 Γ
+  inctx-subst {Z} {τ1} (InCtxSkip {τ = τ} inctx) rewrite sub-shift-miss Z τ1 τ = inctx
+  inctx-subst {1+ m} {τ1} (InCtxSkip {τ = τ} inctx) rewrite sub-shift Z m τ1 τ = InCtxSkip (inctx-subst inctx)
+  inctx-subst InCtxZ = InCtxZ
+  inctx-subst (InCtx1+ inctx) = InCtx1+ (inctx-subst inctx)
 
-  -- example-gamma-ct : context-counter example-gamma 5 5 
-  -- example-gamma-ct = CtxCtTVar (CtxCtVar  (CtxCtVar   (CtxCtVar    (CtxCtVar     (CtxCtVar      (CtxCtTVar (CtxCtTVar (CtxCtTVar (CtxCtTVar CtxCtEmpty)))))))))
+  wf-subst : ∀{m τ1 τ2 Γ} → ∅ ⊢ τ1 wf → Γ ⊢ τ2 wf → TCtxSub m τ1 Γ ⊢ TTSub m τ1 τ2 wf
+  wf-subst wf1 (WFSkip wf2) =  weakening-wf-var (wf-subst wf1 wf2)
+  wf-subst {Z} {τ1} wf1 WFVarZ rewrite ↓↑-invert {Z} {Z} {τ1} rewrite ↑Z Z τ1 = weakening-wf wf1
+  wf-subst {1+ m} wf1 WFVarZ = WFVarZ
+  wf-subst {Z} wf1 (WFVarS wf2) = wf2
+  wf-subst {1+ m} {τ1} wf1 (WFVarS {n = n} wf2) rewrite sub-incr m n τ1 = wf-inc (wf-subst {m} wf1 wf2)
+  wf-subst wf1 WFBase = WFBase
+  wf-subst wf1 WFHole = WFHole
+  wf-subst wf1 (WFArr wf2 wf3) = WFArr (wf-subst wf1 wf2) (wf-subst wf1 wf3)
+  wf-subst wf1 (WFForall wf2) = WFForall (wf-subst wf1 wf2)
 
-  -- example-gamma-inctx : 3 , T 2 ∈ (example-gamma ctx+ (TVar, ∅))
-  -- example-gamma-inctx = InCtxSkip (InCtx1+ (InCtx1+ (InCtx1+ InCtxZ)))
+  subsub : (n m : Nat) → (τ1 τ2 τ3 : htyp) → TTSub (n nat+ m) τ1 (TTSub n τ2 τ3) == TTSub n (TTSub m τ1 τ2) (TTSub (1+ n nat+ m) τ1 τ3)
+  subsub n m τ1 τ2 b = refl
+  subsub n m τ1 τ2 (T x) = {!   !}
+  subsub n m τ1 τ2 ⦇-⦈ = refl
+  subsub n m τ1 τ2 (τ3 ==> τ4) rewrite subsub n m τ1 τ2 τ3 rewrite subsub n m τ1 τ2 τ4 = refl
+  subsub n m τ1 τ2 (·∀ τ3) rewrite subsub (1+ n) m τ1 τ2 τ3 = refl
 
-  -- example-gamma-inctx' : 3 , T 2 ∈ TCtxSub 5 b example-gamma 
-  -- example-gamma-inctx' = InCtxSkip (InCtx1+ (InCtx1+ (InCtx1+ InCtxZ)))
-
-  convenient-wf-subst : ∀{Γ m τ1 τ2} → ∅ ⊢ τ1 wf → (Γ ctx+ (TVar, ∅)) ⊢ τ2 wf → TCtxSub m τ1 Γ ⊢ TTSub m τ1 τ2 wf
-  convenient-wf-subst wf1 wf2 = {!   !} --wf-TCtxSub (wf-TTSub (weakening-wf wf1) (wf-swap-tvar {! wf2  !}))
-
-  wt-TtSub-helper : ∀{Γ n m d τ1 τ2} →
-    (⊢ (Γ ctx+ (TVar, ∅)) ctxwf) →
-    (context-counter Γ n m) → 
+  wt-TtSub-strong : ∀{Γ m d τ1 τ2} →
+    (⊢ Γ ctxwf) →
     (∅ ⊢ τ1 wf) → 
-    ((Γ ctx+ (TVar, ∅)) ⊢ d :: τ2) → 
+    (Γ ⊢ d :: τ2) → 
     (TCtxSub m τ1 Γ ⊢ TtSub m τ1 d :: TTSub m τ1 τ2)
-  wt-TtSub-helper ctxwf ctxct wf TAConst = TAConst
-  wt-TtSub-helper ctxwf ctxct wf (TAAp wt wt₁) = TAAp (wt-TtSub-helper ctxwf ctxct wf wt) (wt-TtSub-helper ctxwf ctxct wf wt₁)
-  wt-TtSub-helper ctxwf ctxct wf (TATAp x wt x₁) = TATAp (convenient-wf-subst wf x) (wt-TtSub-helper ctxwf ctxct wf wt) {!   !}
-  wt-TtSub-helper ctxwf ctxct wf TAEHole = TAEHole
-  wt-TtSub-helper ctxwf ctxct wf (TANEHole wt) = TANEHole (wt-TtSub-helper ctxwf ctxct wf wt)
-  wt-TtSub-helper {m = m} ctxwf ctxct wf (TACast wt x x₁) = TACast (wt-TtSub-helper ctxwf ctxct wf wt) (convenient-wf-subst wf x) {!   !}
-  wt-TtSub-helper ctxwf ctxct wf (TALam x wt) = TALam (convenient-wf-subst wf x) (wt-TtSub-helper (CtxWFVar x ctxwf) (CtxCtVar ctxct) wf wt)
-  wt-TtSub-helper ctxwf ctxct wf (TATLam wt) = TATLam (wt-TtSub-helper (CtxWFTVar ctxwf) (CtxCtTVar ctxct) wf wt)
-  wt-TtSub-helper ctxwf ctxct wf (TAVar x) = TAVar {!   !} --(inctx-sub ctxct x)
-  wt-TtSub-helper ctxwf ctxct wf (TAFailedCast wt GBase GBase incon) = abort (incon ConsistBase)
-  wt-TtSub-helper ctxwf ctxct wf (TAFailedCast wt GArr GArr incon) = abort (incon (ConsistArr ConsistHole1 ConsistHole1))
-  wt-TtSub-helper ctxwf ctxct wf (TAFailedCast wt GForall GForall incon) = abort (incon (ConsistForall ConsistHole1))
-  wt-TtSub-helper ctxwf ctxct wf (TAFailedCast wt GBase GArr incon) = TAFailedCast (wt-TtSub-helper ctxwf ctxct wf wt) GBase GArr incon
-  wt-TtSub-helper ctxwf ctxct wf (TAFailedCast wt GBase GForall incon) = TAFailedCast (wt-TtSub-helper ctxwf ctxct wf wt) GBase GForall incon
-  wt-TtSub-helper ctxwf ctxct wf (TAFailedCast wt GArr GBase incon) = TAFailedCast (wt-TtSub-helper ctxwf ctxct wf wt) GArr GBase incon
-  wt-TtSub-helper ctxwf ctxct wf (TAFailedCast wt GArr GForall incon) = TAFailedCast (wt-TtSub-helper ctxwf ctxct wf wt) GArr GForall incon
-  wt-TtSub-helper ctxwf ctxct wf (TAFailedCast wt GForall GBase incon) = TAFailedCast (wt-TtSub-helper ctxwf ctxct wf wt) GForall GBase incon
-  wt-TtSub-helper ctxwf ctxct wf (TAFailedCast wt GForall GArr incon) = TAFailedCast (wt-TtSub-helper ctxwf ctxct wf wt) GForall GArr incon
+  wt-TtSub-strong ctxwf wf TAConst = TAConst
+  wt-TtSub-strong ctxwf wf (TAAp wt wt₁) = TAAp (wt-TtSub-strong ctxwf wf wt) (wt-TtSub-strong ctxwf wf wt₁)
+  wt-TtSub-strong ctxwf wf (TATAp x wt refl) = TATAp (wf-subst wf x) (wt-TtSub-strong ctxwf wf wt) (sym {!   !})
+  wt-TtSub-strong ctxwf wf TAEHole = TAEHole
+  wt-TtSub-strong ctxwf wf (TANEHole wt) = TANEHole (wt-TtSub-strong ctxwf wf wt)
+  wt-TtSub-strong {m = m} ctxwf wf (TACast wt x con) = TACast (wt-TtSub-strong ctxwf wf wt) (wf-subst wf x) (consist-sub con) 
+  wt-TtSub-strong ctxwf wf (TALam x wt) = TALam (wf-subst wf x) (wt-TtSub-strong (CtxWFVar x ctxwf) wf wt)
+  wt-TtSub-strong ctxwf wf (TATLam wt) = TATLam (wt-TtSub-strong (CtxWFTVar ctxwf) wf wt)
+  wt-TtSub-strong ctxwf wf (TAVar x) = TAVar (inctx-subst x)
+  wt-TtSub-strong ctxwf wf (TAFailedCast wt GBase GBase incon) = abort (incon ConsistBase)
+  wt-TtSub-strong ctxwf wf (TAFailedCast wt GArr GArr incon) = abort (incon (ConsistArr ConsistHole1 ConsistHole1))
+  wt-TtSub-strong ctxwf wf (TAFailedCast wt GForall GForall incon) = abort (incon (ConsistForall ConsistHole1))
+  wt-TtSub-strong ctxwf wf (TAFailedCast wt GBase GArr incon) = TAFailedCast (wt-TtSub-strong ctxwf wf wt) GBase GArr incon
+  wt-TtSub-strong ctxwf wf (TAFailedCast wt GBase GForall incon) = TAFailedCast (wt-TtSub-strong ctxwf wf wt) GBase GForall incon
+  wt-TtSub-strong ctxwf wf (TAFailedCast wt GArr GBase incon) = TAFailedCast (wt-TtSub-strong ctxwf wf wt) GArr GBase incon
+  wt-TtSub-strong ctxwf wf (TAFailedCast wt GArr GForall incon) = TAFailedCast (wt-TtSub-strong ctxwf wf wt) GArr GForall incon
+  wt-TtSub-strong ctxwf wf (TAFailedCast wt GForall GBase incon) = TAFailedCast (wt-TtSub-strong ctxwf wf wt) GForall GBase incon
+  wt-TtSub-strong ctxwf wf (TAFailedCast wt GForall GArr incon) = TAFailedCast (wt-TtSub-strong ctxwf wf wt) GForall GArr incon
 
   wt-TtSub : ∀{d τ1 τ2} →
     ∅ ⊢ τ1 wf → 
     (TVar, ∅) ⊢ d :: τ2 →
     ∅ ⊢ TtSub Z τ1 d :: TTSub Z τ1 τ2
-  wt-TtSub wf wt = wt-TtSub-helper (CtxWFTVar CtxWFEmpty) CtxCtEmpty wf wt
+  wt-TtSub wf wt = wt-TtSub-strong (CtxWFTVar CtxWFEmpty) wf wt
 
   no-fvs-lemma-type : ∀{Γ t1 t2 τ} → (m : Nat) → context-counter Γ t1 t2 → Γ ⊢ τ wf → ↑ t2 m τ == τ
   no-fvs-lemma-type m (CtxCtVar ctxct) (WFSkip wf) = no-fvs-lemma-type m ctxct wf 
@@ -193,10 +200,10 @@ module typing-subst where
   wt-ttSub-helper {Γ} {n} {m} {d1} ctxwf ctxct wt1 (TAVar inctx) | Inl refl with wf-ta CtxWFEmpty wt1  
   ... | wf rewrite no-fvs-lemma n m CtxWFEmpty CtxCtEmpty wt1 rewrite inctx-count1 ctxct inctx rewrite no-fvs-lemma-type m CtxCtEmpty wf = weakening-wt wt1
   wt-ttSub-helper {Γ} {n} {m} ctxwf ctxct wt1 (TAVar {n = x} inctx) | Inr neq = TAVar (inctx-count2 neq ctxct inctx)
-  
+    
   wt-ttSub : ∀{d1 d2 τ1 τ2} →
     (∅ ⊢ d1 :: τ1) → 
     ((τ1 , ∅) ⊢ d2 :: τ2) → 
     (∅ ⊢ ttSub Z Z d1 d2 :: τ2)
   wt-ttSub = wt-ttSub-helper CtxWFEmpty CtxCtEmpty
-     
+      

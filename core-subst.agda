@@ -92,8 +92,9 @@ module core-subst where
   ... | Inl refl = ↑d 0 n 0 m d
   ... | Inr neq = X (↓Nat n 1 x)
  
+  -- assumes tau is closed, otherwise need to increment fv's in tau in last case
   TCtxSub : Nat → htyp → ctx → ctx 
   TCtxSub n τ ∅ = ∅
   TCtxSub n τ (x , Γ) = (TTSub n τ x) , (TCtxSub n τ Γ)
-  TCtxSub Z τ (TVar, Γ) = (TVar, Γ)
+  TCtxSub Z τ (TVar, Γ) = Γ
   TCtxSub (1+ n) τ (TVar, Γ) = TVar, TCtxSub n τ Γ

@@ -21,6 +21,21 @@ module lemmas-wf where
   wf-inc (WFArr wf wf₁) = WFArr (wf-inc wf) (wf-inc wf₁)
   wf-inc (WFForall wf) = WFForall (wf-inc wf)
 
+  -- duplicate with weakening-wf-var
+  -- wf-skip-helper : ∀{τ'} → (n : Nat) → (Γ : ctx) → (τ : htyp) → ctx-extend-tvars n Γ ⊢ τ' wf → ctx-extend-tvars n (τ , Γ) ⊢ τ' wf
+  -- wf-skip-helper Z (x , Γ) τ (WFSkip wf) = WFSkip (WFSkip wf)
+  -- wf-skip-helper Z (TVar, Γ) τ WFVarZ = WFSkip WFVarZ
+  -- wf-skip-helper Z (TVar, Γ) τ (WFVarS wf) = WFSkip (WFVarS wf)
+  -- wf-skip-helper (1+ n) Γ τ WFVarZ = WFVarZ
+  -- wf-skip-helper (1+ n) Γ τ (WFVarS wf) = WFVarS (wf-skip-helper n Γ τ wf)
+  -- wf-skip-helper n Γ τ WFBase = WFBase
+  -- wf-skip-helper n Γ τ WFHole = WFHole
+  -- wf-skip-helper n Γ τ (WFArr wf wf₁) = WFArr (wf-skip-helper n Γ τ wf) (wf-skip-helper n Γ τ wf₁)
+  -- wf-skip-helper n Γ τ (WFForall wf) = WFForall (wf-skip-helper (1+ n) Γ τ wf)
+
+  -- wf-skip : ∀{Γ τ x} → Γ ⊢ τ wf → (x , Γ) ⊢ τ wf
+  -- wf-skip wf = wf-skip-helper _ _ _ wf
+
   wf-ctx-var : ∀{τ n Γ} →
     ⊢ Γ ctxwf →
     n , τ ∈ Γ → 
@@ -95,10 +110,10 @@ module lemmas-wf where
   wf-ta ctxwf (TAAp wt wt₁) with wf-ta ctxwf wt 
   ... | WFArr _ wf = wf
   wf-ta ctxwf (TATAp x wt refl) with wf-ta ctxwf wt 
-  ... | WFForall wf = wf-TTSub x wf 
-  wf-ta ctxwf TAEHole = WFHole
-  wf-ta ctxwf (TANEHole _) = WFHole
-  wf-ta ctxwf (TACast _ wf _) = wf 
-  wf-ta ctxwf (TAFailedCast wt _ GBase _) = WFBase    
+  ... | WFForall wf = wf-TTSub x wf  
+  wf-ta ctxwf TAEHole = WFHole  
+  wf-ta ctxwf (TANEHole _) = WFHole 
+  wf-ta ctxwf (TACast _ wf _) = wf  
+  wf-ta ctxwf (TAFailedCast wt _ GBase _) = WFBase     
   wf-ta ctxwf (TAFailedCast wt _ GArr _) = WFArr WFHole WFHole
   wf-ta ctxwf (TAFailedCast wt _ GForall _) = WFForall WFHole
