@@ -66,13 +66,6 @@ module debruijn.debruijn-lemmas-subst where
   ... | Inr neq = refl
   ... | Inl refl rewrite sym (↑d'-↑td-comm {1+ n} {m} {Z} {Z} {d1}) with ↓↑d'-invert {x} {Z} {↑td 0 m d1} 
   ... | eq rewrite nat+1+ n Z rewrite nat+Z n rewrite eq = ↑d'-correct
-
-  -- TTSub-shift : ∀{l n m τ1 τ2} → ↑ n m (TTSub l τ1 τ2) == TTSub l (↑ n m τ1) (↑ (1+ n) m τ2) 
-  -- TTSub-shift {l} {n} {m} {τ1} {b} = refl
-  -- TTSub-shift {l} {n} {m} {τ1} {⦇-⦈} = refl
-  -- TTSub-shift {l} {n} {m} {τ1} {τ2 ==> τ3} rewrite TTSub-shift {l} {n} {m} {τ1} {τ2} rewrite TTSub-shift {l} {n} {m} {τ1} {τ3} = refl
-  -- TTSub-shift {l} {n} {m} {τ1} {·∀ τ2} rewrite TTSub-shift {1+ l} {1+ n} {m} {τ1} {τ2} = {!   !}
-  -- TTSub-shift {l} {n} {m} {τ1} {T x} = {!   !}
       
   wf-TCtxSub : ∀{m Γ τ τ1} → Γ ⊢ τ wf → TCtxSub m τ1 Γ ⊢ τ wf
   wf-TCtxSub (WFSkip wf) = WFSkip (wf-TCtxSub wf)
