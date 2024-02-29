@@ -1,5 +1,3 @@
--- {-# OPTIONS --allow-unsolved-metas #-}
-
 open import Nat
 open import Prelude
 open import core-type
@@ -192,7 +190,6 @@ module typing-subst where
   neqs-relation Z m Z neq1 neq2 eq = neq1 refl
   neqs-relation (1+ n) m (1+ x) neq1 neq2 eq = neqs-relation n m x (\{ refl → neq1 refl}) (\{ refl → neq2 refl}) (1+inj _ _ eq)
 
-  -- also applicable : n != x , 1 + n + m != x
   other-equation-nat-down : (n m x : Nat) → ↓Nat (n nat+ m) 1 (↓Nat n 1 x) == ↓Nat n 1 (↓Nat (1+ (n nat+ m)) 1 x)
   other-equation-nat-down Z Z Z = refl
   other-equation-nat-down Z m (1+ x) = refl

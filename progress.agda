@@ -21,7 +21,7 @@ module progress where
     ∅ ⊢ d :: τ →
     ok d
   progress TAConst = BV (BVVal VConst) 
-  progress (TALam x wt) = BV (BVVal VLam)
+  progress (TALam _ wt) = BV (BVVal VLam)
   progress (TATLam wt) = BV (BVVal VTLam)
   progress TAEHole = I IEHole
   progress (TANEHole wt) with progress wt 
@@ -29,9 +29,9 @@ module progress where
   ... | I x = I (INEHole (FIndet x))
   ... | BV x = I (INEHole (FBoxedVal x))
   progress (TAFailedCast wt y z w) with progress wt
-  ... | S (d' , Step x a q) = S (_ , Step (FHFailedCast x) a (FHFailedCast q))
-  ... | I x = I (IFailedCast (FIndet x) y z λ eq → w (~refl-convenience eq))
-  ... | BV x = I (IFailedCast (FBoxedVal x) y z (λ eq → w (~refl-convenience eq)))
+  ... | S (d' , Step x y z) = S (_ , Step (FHFailedCast x) y (FHFailedCast z))
+  ... | I x = I (IFailedCast (FIndet x) y z \{ refl → w ~refl})
+  ... | BV x = I (IFailedCast (FBoxedVal x) y z \{ refl → w ~refl})
   progress (TATAp wf wt refl) with progress wt 
   ... | S (_ , Step x y z) = S (_ , (Step (FHTAp x) y (FHTAp z)))
   ... | I IEHole = I (ITAp (λ τ1 τ2 d' ()) IEHole)

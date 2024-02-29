@@ -1,5 +1,3 @@
--- {-# OPTIONS --allow-unsolved-metas #-}
-
 open import Nat
 open import Prelude
 open import core-type
@@ -13,22 +11,6 @@ open import lemmas-consistency
 open import lemmas-meet
 
 module lemmas-subst where
-
-  -- TTSub-inc : (τ : htyp) → (m n d : Nat) → TTSub (1+ m) τ (T (1+ n)) == ↑ d 1 (TTSub m τ (T n))
-  -- TTSub-inc τ m n d with natEQ m n 
-  -- ... | Inl refl = {!   !} 
-  -- ... | Inr neq = {!   !}
-      
-  -- wf-TCtxSub : ∀{m Γ τ τ1} → Γ ⊢ τ wf → TCtxSub m τ1 Γ ⊢ τ wf
-  -- wf-TCtxSub (WFSkip wf) = WFSkip (wf-TCtxSub wf)
-  -- wf-TCtxSub {Z} WFVarZ = {!   !}
-  -- wf-TCtxSub {1+ m} WFVarZ = WFVarZ
-  -- wf-TCtxSub {Z} (WFVarS wf) = {!   !} --WFVarS wf
-  -- wf-TCtxSub {1+ m} (WFVarS wf) = WFVarS (wf-TCtxSub wf)
-  -- wf-TCtxSub WFBase = WFBase
-  -- wf-TCtxSub WFHole = WFHole
-  -- wf-TCtxSub (WFArr wf wf₁) = WFArr (wf-TCtxSub wf) (wf-TCtxSub wf₁)
-  -- wf-TCtxSub {m} (WFForall wf) = WFForall (wf-TCtxSub {1+ m} wf)
 
   wf-TTSub-helper2 :
     ∀{t n Γ} →
@@ -86,20 +68,6 @@ module lemmas-subst where
   wf-TTSub wf1 (WFArr wf2 wf3) = WFArr (wf-TTSub wf1 wf2) (wf-TTSub wf1 wf3)
   wf-TTSub {τ1 = τ1} wf1 (WFForall wf2) rewrite ↑compose Z 1 τ1 = WFForall (wf-TTSub-helper wf1 wf2)
 
-  -- wf-TTSub : ∀{Γ m τ1 τ2 n} → context-counter Γ n m → (∅ ⊢ τ1 wf) → (Γ ctx+ (TVar, ∅)) ⊢ τ2 wf → TCtxSub m τ1 Γ ⊢ TTSub m τ1 τ2 wf
-  -- wf-TTSub {∅} {m} {τ1} CtxCtEmpty wf1 WFVarZ rewrite ↓↑-invert {Z} {Z} {τ1} rewrite ↑Z Z τ1 = wf1
-  -- wf-TTSub ctxct wf1 WFBase = WFBase
-  -- wf-TTSub ctxct wf1 WFHole = WFHole
-  -- wf-TTSub ctxct wf1 (WFArr wf2 wf3) = WFArr (wf-TTSub ctxct wf1 wf2) (wf-TTSub ctxct wf1 wf3)
-  -- wf-TTSub ctxct wf1 (WFForall wf2) = WFForall (wf-TTSub (CtxCtTVar ctxct) wf1 wf2)
-  -- wf-TTSub {x , Γ} (CtxCtVar ctxct) wf1 wf2 = weakening-wf-var (wf-TTSub ctxct wf1 (strengthen-wf-var wf2))
-  -- wf-TTSub {TVar, Γ} (CtxCtTVar ctxct) wf1 WFVarZ = WFVarZ
-  -- wf-TTSub {TVar, Γ} (CtxCtTVar ctxct) wf1 (WFVarS wf2) = {!   !}
-  -- -- with wf-TTSub ctxct wf1 {!   !}
-  -- -- ... | thing = {!   !}
-
-  -- wf-TTSub : ∀{Γ1 Γ2 m τ1 τ2 n} → context-counter Γ1 n m → (Γ2 ⊢ τ1 wf) → (Γ1 ctx+ (TVar, Γ2)) ⊢ τ2 wf → TCtxSub m τ1 Γ1 ⊢ TTSub m τ1 τ2 wf
-
   ~TTSub-helper : ∀{n Γ τ1 τ2 τ3} → (ctx-extend-tvars (1+ n) Γ) ⊢ τ2 wf → (ctx-extend-tvars (1+ n) Γ) ⊢ τ3 wf → τ2 ~ τ3 → TTSub n τ1 τ2 ~ TTSub n τ1 τ3
   ~TTSub-helper wf2 wf3 ConsistBase = ConsistBase
   ~TTSub-helper wf2 wf3 ConsistVar = ~refl
@@ -111,45 +79,3 @@ module lemmas-subst where
 
   ~TTSub : ∀ {Γ τ1 τ2 τ3} → (TVar, Γ) ⊢ τ2 wf → (TVar, Γ) ⊢ τ3 wf → τ2 ~ τ3 → TTSub Z τ1 τ2 ~ TTSub Z τ1 τ3
   ~TTSub wf2 wf3 con = ~TTSub-helper wf2 wf3 con
-
-  -- inctx-sub : ∀ {n Γ τ1 τ2} → 
-  --   (n , τ2 ∈ Γ) → 
-  --   (n , TTSub τ1 τ2 ∈ TCtxSub τ1 Γ)
-  -- inctx-sub InCtxZ = InCtxZ
-  -- inctx-sub (InCtx1+ inctx) = InCtx1+ (inctx-sub inctx)
-  
-  -- SubSub-helper : 
-  --   (n m : Nat) → 
-  --   (τ1 τ2 τ3 : htyp) →
-  --   TTSub (m nat+ n) τ1 (TTSub m τ2 τ3) == 
-  --   TTSub m (TTSub n τ1 τ2) (TTSub (m nat+ 1+ n) τ1 τ3)
-  -- SubSub-helper n m τ1 τ2 b = refl
-  -- -- SubSub-helper n m τ1 τ2 (T x) = {!   !}
-
-  -- SubSub-helper n m τ1 τ2 (T x) with natEQ m x
-  -- SubSub-helper n m τ1 τ2 (T x) | Inl refl with natEQ (m nat+ 1+ n) m
-  -- SubSub-helper n m τ1 τ2 (T x) | Inl refl | Inl eq = abort (h1 m n eq)
-  --   where 
-  --     h1 : (m n : Nat) → (m nat+ 1+ n) == m → ⊥
-  --     h1 Z n () 
-  --     h1 (1+ m) n eq = h1 m n (1+inj (m nat+ 1+ n) m eq)
-  -- SubSub-helper n m τ1 τ2 (T x) | Inl refl | Inr neq = {!   !}
-  -- SubSub-helper n m τ1 τ2 (T x) | Inr neq with natEQ (m nat+ n) (↓Nat m 1 x) | natEQ (m nat+ 1+ n) x
-  -- SubSub-helper n m τ1 τ2 (T x) | Inr neq | Inl eq | Inl eq2 = {! eq  !}
-  -- SubSub-helper n m τ1 τ2 (T x) | Inr neq | Inl eq | Inr neq2 = {! eq  !}
-  -- SubSub-helper n m τ1 τ2 (T x) | Inr neq | Inr neq2 | Inl eq = {!   !} 
-  -- SubSub-helper n m τ1 τ2 (T x) | Inr neq | Inr neq2 | Inr neq3 = {!   !} 
-
-  -- SubSub-helper n m τ1 τ2 ⦇-⦈ = refl
-  -- SubSub-helper n m τ1 τ2 (τ3 ==> τ4) rewrite SubSub-helper n m τ1 τ2 τ3 rewrite SubSub-helper n m τ1 τ2 τ4 = refl
-  -- SubSub-helper n m τ1 τ2 (·∀ τ3) with SubSub-helper n (1+ m) τ1 τ2 τ3 
-  -- ... | result rewrite ↑compose Z (m nat+ 1) τ2    
-  --   rewrite ↑compose Z (1+ (m nat+ n)) τ1
-  --   rewrite ↑compose Z (1+ m) τ2
-  --   rewrite ↑compose Z (1+ m) (↓ n 1 (TT[ ↑ 0 (1+ n) τ1 / n ] τ2))  
-  --   rewrite ↑compose Z (1+ (m nat+ 1+ n)) τ1 rewrite result = refl
-  
-  -- SubSub : ∀{n τ1 τ2 τ3} →  
-  --   TTSub n τ1 (TTSub Z τ2 τ3) ==  
-  --   TTSub Z (TTSub n τ1 τ2) (TTSub (1+ n) τ1 τ3)            
-  -- SubSub {n = n} {τ1 = τ1} {τ2 = τ2} {τ3 = τ3} = SubSub-helper n Z τ1 τ2 τ3  

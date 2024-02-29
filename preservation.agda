@@ -20,8 +20,8 @@ module preservation where
   wt-filling (TAAp _ wt) (FHAp2 fill) = wt-filling wt fill
   wt-filling (TATAp _ wt _) (FHTAp fill) = wt-filling wt fill
   wt-filling (TANEHole wt) (FHNEHole fill) = wt-filling wt fill
-  wt-filling (TACast wt x x₁) (FHCast fill) = wt-filling wt fill
-  wt-filling (TAFailedCast wt x x₁ x₂) (FHFailedCast fill) = wt-filling wt fill
+  wt-filling (TACast wt _ _) (FHCast fill) = wt-filling wt fill
+  wt-filling (TAFailedCast wt _ _ _) (FHFailedCast fill) = wt-filling wt fill
 
   wt-different-fill : ∀{ Γ d ε d1 d2 d' τ1 τ2} →
     d == ε ⟦ d1 ⟧ →
@@ -35,8 +35,8 @@ module preservation where
   wt-different-fill (FHAp2 fill1) (FHAp2 fill2) (TAAp wt wt1) wt2 wt3 = TAAp wt (wt-different-fill fill1 fill2 wt1 wt2 wt3)
   wt-different-fill (FHTAp fill1) (FHTAp fill2) (TATAp x wt sub) wt2 wt3 = TATAp x (wt-different-fill fill1 fill2 wt wt2 wt3) sub
   wt-different-fill (FHNEHole fill1) (FHNEHole fill2) (TANEHole wt) wt2 wt3 = TANEHole (wt-different-fill fill1 fill2 wt wt2 wt3)
-  wt-different-fill (FHCast fill1) (FHCast fill2) (TACast wt x x₁) wt2 wt3 = TACast (wt-different-fill fill1 fill2 wt wt2 wt3) x x₁
-  wt-different-fill (FHFailedCast fill1) (FHFailedCast fill2) (TAFailedCast wt x x₁ x₂) wt2 wt3 = TAFailedCast (wt-different-fill fill1 fill2 wt wt2 wt3) x x₁ x₂
+  wt-different-fill (FHCast fill1) (FHCast fill2) (TACast wt wf con) wt2 wt3 = TACast (wt-different-fill fill1 fill2 wt wt2 wt3) wf con
+  wt-different-fill (FHFailedCast fill1) (FHFailedCast fill2) (TAFailedCast wt gnd1 gnd2 incon) wt2 wt3 = TAFailedCast (wt-different-fill fill1 fill2 wt wt2 wt3) gnd1 gnd2 incon
 
   -- instruction transitions preserve type
   preserve-trans : ∀{ d d' τ } →
@@ -48,21 +48,21 @@ module preservation where
   preserve-trans (TALam x wt) ()
   preserve-trans (TATLam wt) ()
   preserve-trans (TAAp (TALam wf wt1) wt2) ITLam = wt-ttSub wt2 wt1
-  preserve-trans (TAAp (TACast wt1 (WFArr wf1 wf2) (ConsistArr con1 con2)) wt2) ITApCast with wf-ta CtxWFEmpty wt1
-  ... | WFArr wf3 wf4 = TACast (TAAp wt1 (TACast wt2 wf3 (~sym con1))) wf2 con2
+  preserve-trans (TAAp (TACast wt1 (WFArr _ wf1) (ConsistArr con1 con2)) wt2) ITApCast with wf-ta CtxWFEmpty wt1
+  ... | WFArr wf2 _ = TACast (TAAp wt1 (TACast wt2 wf2 (~sym con1))) wf1 con2
   preserve-trans (TATAp wf (TATLam wt) refl) ITTLam = wt-TtSub wf wt
-  preserve-trans (TATAp x (TACast wt (WFForall wf) (ConsistForall con)) refl) ITTApCast with wf-ta CtxWFEmpty wt 
-  ... | WFForall wf2 = TACast (TATAp x wt refl) (wf-TTSub x wf) (~TTSub wf2 wf con)
+  preserve-trans (TATAp wf1 (TACast wt (WFForall wf2) (ConsistForall con)) refl) ITTApCast with wf-ta CtxWFEmpty wt 
+  ... | WFForall wf3 = TACast (TATAp wf1 wt refl) (wf-TTSub wf1 wf2) (~TTSub wf3 wf2 con)
   preserve-trans TAEHole () 
   preserve-trans (TANEHole _) ()
-  preserve-trans (TACast wt x x₁) ITCastID = wt
-  preserve-trans (TACast (TACast wt x₃ x₄) x x₁) (ITCastSucceed gnd) = wt
-  preserve-trans (TACast (TACast wt x₅ x₆) x x₁) (ITCastFail gnd x₃ x₄) = TAFailedCast wt gnd x₃ x₄
-  preserve-trans (TACast wt x x₁) (ITGround (MGArr x₂)) = TACast (TACast wt (WFArr x x) (ConsistArr ConsistHole1 ConsistHole1)) x ConsistHole1
-  preserve-trans (TACast wt x x₁) (ITGround (MGForall x₂)) = TACast (TACast wt (WFForall WFHole) (ConsistForall ConsistHole1)) x ConsistHole1
-  preserve-trans (TACast wt x x₁) (ITExpand (MGArr x₂)) = TACast (TACast wt (WFArr WFHole WFHole) ConsistHole2) x (ConsistArr ConsistHole2 ConsistHole2)
-  preserve-trans (TACast wt x x₁) (ITExpand (MGForall x₂)) = TACast (TACast wt (WFForall WFHole) ConsistHole2) x (ConsistForall ConsistHole2)
-  preserve-trans (TAFailedCast wt x x₁ x₂) ()  
+  preserve-trans (TACast wt _ _) ITCastID = wt
+  preserve-trans (TACast (TACast wt _ _) _ _) (ITCastSucceed gnd) = wt
+  preserve-trans (TACast (TACast wt _ _) _ _) (ITCastFail gnd1 gnd2 incon) = TAFailedCast wt gnd1 gnd2 incon
+  preserve-trans (TACast wt wf _) (ITGround (MGArr _)) = TACast (TACast wt (WFArr wf wf) (ConsistArr ConsistHole1 ConsistHole1)) wf ConsistHole1
+  preserve-trans (TACast wt wf _) (ITGround (MGForall _)) = TACast (TACast wt (WFForall WFHole) (ConsistForall ConsistHole1)) wf ConsistHole1
+  preserve-trans (TACast wt wf _) (ITExpand (MGArr _)) = TACast (TACast wt (WFArr WFHole WFHole) ConsistHole2) wf (ConsistArr ConsistHole2 ConsistHole2)
+  preserve-trans (TACast wt wf _) (ITExpand (MGForall _)) = TACast (TACast wt (WFForall WFHole) ConsistHole2) wf (ConsistForall ConsistHole2)
+  preserve-trans (TAFailedCast _ _ _ _) ()  
 
   -- evaluation steps preserve type
   preservation : ∀ { d d' τ } →  
@@ -70,4 +70,5 @@ module preservation where
     d ↦ d' →
     ∅ ⊢ d' :: τ
   preservation wt (Step fill1 trans fill2) with wt-filling wt fill1       
-  ... | τ' , wt' = wt-different-fill fill1 fill2 wt wt' (preserve-trans wt' trans) 
+  ... | _ , wt' = wt-different-fill fill1 fill2 wt wt' (preserve-trans wt' trans) 
+ 
