@@ -103,24 +103,136 @@ module typing-subst where
   wf-subst wf1 (WFArr wf2 wf3) = WFArr (wf-subst wf1 wf2) (wf-subst wf1 wf3)
   wf-subst wf1 (WFForall wf2) = WFForall (wf-subst wf1 wf2)
 
+  gt-neq : (n m : Nat) → 1+ (n nat+ m) ≠ n
+  gt-neq Z m ()
+  gt-neq (1+ n) m eq = gt-neq n m ((1+inj _ _ eq))
+
+  other-shift-miss : (n m : Nat) → ↓Nat (1+ (n nat+ m)) 1 n == n
+  other-shift-miss Z m = refl
+  other-shift-miss (1+ n) m rewrite other-shift-miss n m = refl
+
+  some-hit : (n m l : Nat) → ↓Nat (l nat+ n) 1 (↑Nat l (1+ n) (l nat+ m)) == l nat+ (n nat+ m)
+  some-hit Z m Z = refl
+  some-hit (1+ n) m Z rewrite some-hit n m Z = refl
+  some-hit n m (1+ l) rewrite some-hit n m l = refl
+
+  some-other-equation-nat : (n m l k x : Nat) → ↓Nat (k nat+ (l nat+ (n nat+ m))) 1 (↑Nat k (1+ (l nat+ (n nat+ m))) x) ==
+      ↓Nat (k nat+ (l nat+ n)) 1 (↑Nat (k nat+ l) (1+ n) (↓Nat (k nat+ (l nat+ m)) 1 (↑Nat k (1+ (l nat+ m)) x)))
+  some-other-equation-nat Z m Z Z x = refl
+  some-other-equation-nat (1+ n) m Z Z x rewrite some-other-equation-nat n m Z Z x = refl
+  some-other-equation-nat n m (1+ l) Z x rewrite some-other-equation-nat n m l Z x = refl
+  some-other-equation-nat n m l (1+ k) Z = refl
+  some-other-equation-nat n m l (1+ k) (1+ x) rewrite some-other-equation-nat n m l k x = refl
+
+  some-other-equation : (n m l k : Nat) → (τ : htyp) → 
+      ↓ (k nat+ (l nat+ (n nat+ m))) 1 (↑ k (1+ (l nat+ (n nat+ m))) τ) ==
+      ↓ (k nat+ (l nat+ n)) 1 (↑ (k nat+ l) (1+ n) (↓ (k nat+ (l nat+ m)) 1 (↑ k (1+ (l nat+ m)) τ)))
+  some-other-equation n m l k b = refl
+  some-other-equation n m l k (T x) rewrite some-other-equation-nat n m l k x = refl
+  some-other-equation n m l k ⦇-⦈ = refl
+  some-other-equation n m l k (τ ==> τ₁) rewrite some-other-equation n m l k τ rewrite some-other-equation n m l k τ₁ = refl
+  some-other-equation n m l k (·∀ τ) rewrite some-other-equation n m l (1+ k) τ = refl
+
+  an-inequality : (n m l x : Nat) → (l nat+ (n nat+ m)) == (↓Nat (l nat+ n) 1 (↑Nat l (1+ n) x)) → (l nat+ m) == x
+  an-inequality Z m l x eq rewrite nat+Z l rewrite ↓↑Nat-invert Z l x rewrite ↑NatZ l x = eq
+  an-inequality (1+ n) m Z x eq = an-inequality n m Z x (1+inj _ _ eq)
+  an-inequality n m (1+ l) (1+ x) eq rewrite an-inequality n m l x (1+inj _ _ eq) = refl
+
+  extra-equation : (n m l x : Nat) →  (↓Nat (l nat+ (n nat+ m)) 1 (↓Nat (l nat+ n) 1 (↑Nat l (1+ n) x))) == (↓Nat (l nat+ n) 1 (↑Nat l (1+ n) (↓Nat (l nat+ m) 1 x)))
+  extra-equation Z m Z Z = refl
+  extra-equation Z m Z (1+ x) = refl
+  extra-equation (1+ n) m Z x rewrite extra-equation n m Z x = refl
+  extra-equation n m (1+ l) Z = refl
+  extra-equation n m (1+ l) (1+ x) rewrite extra-equation n m l x = refl
+
+  other-sub-shift : (n m l : Nat) → (τ1 τ2 : htyp) → TTSub (l nat+ (n nat+ m)) τ1 (↓ (l nat+ n) 1 (↑ l (1+ n) τ2)) == ↓ (l nat+ n) 1 (↑ l (1+ n) (TTSub (l nat+ m) τ1 τ2))
+  other-sub-shift n m l τ1 b = refl
+  other-sub-shift n m l τ1 (T x) with natEQ (l nat+ m) x 
+  other-sub-shift n m l τ1 (T x) | Inl refl rewrite some-hit n m l rewrite natEQrefl {l nat+ (n nat+ m)} = some-other-equation n m l Z τ1
+  other-sub-shift n m l τ1 (T x) | Inr neq with natEQ (l nat+ (n nat+ m)) (↓Nat (l nat+ n) 1 (↑Nat l (1+ n) x))
+  other-sub-shift n m l τ1 (T x) | Inr neq | Inl eq = abort (neq (an-inequality n m l x eq))
+  other-sub-shift n m l τ1 (T x) | Inr neq | Inr _ rewrite extra-equation n m l x = refl
+  other-sub-shift n m l τ1 ⦇-⦈ = refl
+  other-sub-shift n m l τ1 (τ2 ==> τ3) rewrite other-sub-shift n m l τ1 τ2 rewrite other-sub-shift n m l τ1 τ3 = refl
+  other-sub-shift n m l τ1 (·∀ τ2) rewrite other-sub-shift n m (1+ l) τ1 τ2 = refl
+
+  gt-shift : (n m : Nat) → ↓Nat n 1 (1+ (n nat+ m)) == (n nat+ m)
+  gt-shift Z m = refl
+  gt-shift (1+ n) m rewrite gt-shift n m = refl
+
+  other-sub-shift-miss-var : (n m l x : Nat) → (l nat+ n) ≠ ↓Nat (1+ (l nat+ (n nat+ m))) 1 (↑Nat l (1+ (1+ (n nat+ m))) x)
+  other-sub-shift-miss-var Z m Z x ()
+  other-sub-shift-miss-var (1+ n) m Z x eq = other-sub-shift-miss-var n m Z x (1+inj _ _ eq)
+  other-sub-shift-miss-var n m (1+ l) Z () 
+  other-sub-shift-miss-var n m (1+ l) (1+ x) eq = other-sub-shift-miss-var n m l x (1+inj _ _ eq)
+
+  an-equation : (n m l x : Nat) → 
+    (↓Nat (l nat+ n) 1 (↓Nat (1+ (l nat+ (n nat+ m))) 1 (↑Nat l (1+ (1+ (n nat+ m))) x))) 
+    == (↓Nat (l nat+ (n nat+ m)) 1 (↑Nat l (1+ (n nat+ m)) x))
+  an-equation Z m Z x = refl
+  an-equation (1+ n) m Z x rewrite an-equation n m Z x = refl
+  an-equation n m (1+ l) Z = refl
+  an-equation n m (1+ l) (1+ x) rewrite an-equation n m l x = refl
+
+  other-sub-shift-miss : (n m l : Nat) → (τ1 τ2 : htyp) → TTSub (l nat+ n) τ2 (↓ (1+ (l nat+ (n nat+ m))) 1 (↑ l (1+ (1+ (n nat+ m))) τ1)) == (↓ (l nat+ (n nat+ m)) 1 (↑ l (1+ (n nat+ m)) τ1))
+  other-sub-shift-miss n m l b τ2 = refl
+  other-sub-shift-miss n m l (T x) τ2 with natEQ (l nat+ n)  (↓Nat (1+ (l nat+ (n nat+ m))) 1 (↑Nat l (1+ (1+ (n nat+ m))) x))
+  ... | Inl eq = abort (other-sub-shift-miss-var n m l x eq)
+  ... | Inr _ rewrite an-equation n m l x = refl
+  other-sub-shift-miss n m l ⦇-⦈ τ2 = refl
+  other-sub-shift-miss n m l (τ1 ==> τ3) τ2 rewrite other-sub-shift-miss n m l τ1 τ2 rewrite other-sub-shift-miss n m l τ3 τ2 = refl
+  other-sub-shift-miss n m l (·∀ τ1) τ2 rewrite other-sub-shift-miss n m (1+ l) τ1 τ2 = refl
+
+  neq-relation : (n m x : Nat) → n ≠ x → 1+ (n nat+ m) ≠ x → (n nat+ m) ≠ (↓Nat n 1 x)
+  neq-relation Z m Z neq1 neq2 eq = neq1 refl
+  neq-relation Z m (1+ x) neq1 neq2 refl = neq2 refl
+  neq-relation (1+ n) m (1+ x) neq1 neq2 eq = neq-relation n m x (\ {refl → neq1 refl}) (\ {refl → neq2 refl}) (1+inj _ _ eq)
+
+  neqs-relation : (n m x : Nat) → n ≠ x → 1+ (n nat+ m) ≠ x → n ≠ ↓Nat (1+ (n nat+ m)) 1 x
+  neqs-relation Z m Z neq1 neq2 eq = neq1 refl
+  neqs-relation (1+ n) m (1+ x) neq1 neq2 eq = neqs-relation n m x (\{ refl → neq1 refl}) (\{ refl → neq2 refl}) (1+inj _ _ eq)
+
+  -- also applicable : n != x , 1 + n + m != x
+  other-equation-nat-down : (n m x : Nat) → ↓Nat (n nat+ m) 1 (↓Nat n 1 x) == ↓Nat n 1 (↓Nat (1+ (n nat+ m)) 1 x)
+  other-equation-nat-down Z Z Z = refl
+  other-equation-nat-down Z m (1+ x) = refl
+  other-equation-nat-down Z (1+ m) Z = refl
+  other-equation-nat-down (1+ n) Z Z = refl
+  other-equation-nat-down (1+ n) m Z = refl
+  other-equation-nat-down (1+ n) m (1+ x) rewrite other-equation-nat-down n m x = refl
+
   subsub : (n m : Nat) → (τ1 τ2 τ3 : htyp) → TTSub (n nat+ m) τ1 (TTSub n τ2 τ3) == TTSub n (TTSub m τ1 τ2) (TTSub (1+ n nat+ m) τ1 τ3)
   subsub n m τ1 τ2 b = refl
-  subsub n m τ1 τ2 (T x) = {!   !}
   subsub n m τ1 τ2 ⦇-⦈ = refl
   subsub n m τ1 τ2 (τ3 ==> τ4) rewrite subsub n m τ1 τ2 τ3 rewrite subsub n m τ1 τ2 τ4 = refl
   subsub n m τ1 τ2 (·∀ τ3) rewrite subsub (1+ n) m τ1 τ2 τ3 = refl
+  subsub n m τ1 τ2 (T x) with natEQ n x
+  subsub n m τ1 τ2 (T x) | Inl refl with natEQ (1+ (n nat+ m)) n 
+  subsub n m τ1 τ2 (T x) | Inl refl | Inl eq = abort (gt-neq _ _ eq)
+  subsub n m τ1 τ2 (T x) | Inl refl | Inr _ rewrite other-shift-miss n m with natEQ n n 
+  subsub n m τ1 τ2 (T x) | Inl refl | Inr _ | Inr neq = abort (neq refl)
+  subsub n m τ1 τ2 (T x) | Inl refl | Inr _ | Inl refl = other-sub-shift n m Z τ1 τ2
+  subsub n m τ1 τ2 (T x) | Inr neq with natEQ (1+ (n nat+ m)) x
+  subsub n m τ1 τ2 (T x) | Inr neq | Inl refl 
+    rewrite gt-shift n m rewrite natEQrefl {n nat+ m} 
+    rewrite other-sub-shift-miss n m Z τ1 (TTSub m τ1 τ2) = refl
+  subsub n m τ1 τ2 (T x) | Inr neq1 | Inr neq2 with natEQ (n nat+ m) (↓Nat n 1 x) 
+  subsub n m τ1 τ2 (T x) | Inr neq1 | Inr neq2 | Inl eq = abort (neq-relation _ _ _ neq1 neq2 eq) 
+  subsub n m τ1 τ2 (T x) | Inr neq1 | Inr neq2 | Inr _ with natEQ n (↓Nat (1+ (n nat+ m)) 1 x)
+  subsub n m τ1 τ2 (T x) | Inr neq1 | Inr neq2 | Inr _ | Inl eq = abort (neqs-relation n m x neq1 neq2 eq)
+  subsub n m τ1 τ2 (T x) | Inr neq1 | Inr neq2 | Inr _ | Inr neq3 rewrite other-equation-nat-down n m x = refl
 
-  wt-TtSub-strong : ∀{Γ m d τ1 τ2} →
+  wt-TtSub-strong : ∀{m τ1 τ2 Γ d} →
     (⊢ Γ ctxwf) →
     (∅ ⊢ τ1 wf) → 
     (Γ ⊢ d :: τ2) → 
     (TCtxSub m τ1 Γ ⊢ TtSub m τ1 d :: TTSub m τ1 τ2)
   wt-TtSub-strong ctxwf wf TAConst = TAConst
   wt-TtSub-strong ctxwf wf (TAAp wt wt₁) = TAAp (wt-TtSub-strong ctxwf wf wt) (wt-TtSub-strong ctxwf wf wt₁)
-  wt-TtSub-strong ctxwf wf (TATAp x wt refl) = TATAp (wf-subst wf x) (wt-TtSub-strong ctxwf wf wt) (sym {!   !})
+  wt-TtSub-strong {m} {τ1} ctxwf wf (TATAp {τ1 = τ2} {τ2 = τ3} x wt refl) = TATAp (wf-subst wf x) (wt-TtSub-strong ctxwf wf wt) (sym (subsub Z m τ1 τ2 τ3))
   wt-TtSub-strong ctxwf wf TAEHole = TAEHole
   wt-TtSub-strong ctxwf wf (TANEHole wt) = TANEHole (wt-TtSub-strong ctxwf wf wt)
-  wt-TtSub-strong {m = m} ctxwf wf (TACast wt x con) = TACast (wt-TtSub-strong ctxwf wf wt) (wf-subst wf x) (consist-sub con) 
+  wt-TtSub-strong ctxwf wf (TACast wt x con) = TACast (wt-TtSub-strong ctxwf wf wt) (wf-subst wf x) (consist-sub con) 
   wt-TtSub-strong ctxwf wf (TALam x wt) = TALam (wf-subst wf x) (wt-TtSub-strong (CtxWFVar x ctxwf) wf wt)
   wt-TtSub-strong ctxwf wf (TATLam wt) = TATLam (wt-TtSub-strong (CtxWFTVar ctxwf) wf wt)
   wt-TtSub-strong ctxwf wf (TAVar x) = TAVar (inctx-subst x)

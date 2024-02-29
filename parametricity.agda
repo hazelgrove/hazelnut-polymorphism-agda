@@ -15,17 +15,10 @@ open import lemmas-complete
 
 open import typed-elaboration
 open import complete-elaboration
--- open import preservation
+open import preservation
 open import complete-preservation
 
 module parametricity where
-
-  -- preservation statement included rather than allow unsolved metas
-  preservation : ∀ { d d' τ } →  
-    ∅ ⊢ d :: τ →
-    d ↦ d' →
-    ∅ ⊢ d' :: τ
-  preservation = {!   !}
 
   data _=0_ : (d1 d2 : ihexp) → Set where 
     Eq0Const : c =0 c

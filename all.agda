@@ -20,7 +20,7 @@ open import lemmas-wf
 open import lemmas-subst
 open import lemmas-complete
 
--- open import typing-subst
+open import typing-subst
 
 open import elaborability
 open import elaboration-generality
@@ -28,14 +28,14 @@ open import elaboration-unicity
 open import typed-elaboration
 open import type-assignment-unicity
 
--- open import preservation
+open import preservation
 open import progress 
 
 open import complete-elaboration
 open import complete-preservation
 open import complete-progress
 
--- open import parametricity
+open import parametricity
 open import graduality
 
 module all where
