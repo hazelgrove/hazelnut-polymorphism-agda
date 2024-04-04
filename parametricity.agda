@@ -1168,15 +1168,17 @@ module parametricity where
   eq0-ctxout''' = {!   !}
 
   mutual
-    parametricity21-lemman : ∀{d1 d2 d1'} →
+    parametricity21-lemman : ∀{d1 d2 d1' Δ τ} →
       ¬(d2 final) →
       d1 =0''n d2 →
       d1 →> d1' →
-      Σ[ d2' ∈ ihexp ] (d2 →> d2' × d1' =0'' d2') + Σ[ d2' ∈ ihexp ] ( d2 →> d2' × d1 =0'' d2')
-    parametricity21-lemman {d1 = (·λ x1 [ τ1 ] d1) ∘ d3} {d2 = (·λ x2 [ τ2 ] d2) ∘ d4} nfin (Eq0Ap (Eq0Lam x) x₁) ITLam = Inl ( [ d4 / x2 ] d2 , ITLam , (eq0-eq0'' (eq0-subst d1 d2 x₁ x)) )
-    parametricity21-lemman nfin (Eq0Ap x x₁) ITApCast = {!   !}
-    parametricity21-lemman nfin (Eq0TAp x) ITTLam = {!   !}
-    parametricity21-lemman nfin (Eq0TAp x) ITTApCast = {!   !}
+      Δ , ∅ , ∅ ⊢ d2 :: τ →
+      Σ[ d2' ∈ ihexp ] (d2 →> d2' × d1' =0'' d2') -- + Σ[ d2' ∈ ihexp ] ( d2 →> d2' × d1 =0'' d2')
+    parametricity21-lemman {d1 = (·λ x1 [ τ1 ] d1) ∘ d3} {d2 = (·λ x2 [ τ2 ] d2) ∘ d4} nfin (Eq0Ap (Eq0Lam x) x₁) ITLam wt = [ d4 / x2 ] d2 , ITLam , (eq0-eq0'' (eq0-subst d1 d2 x₁ x))
+    parametricity21-lemman {d1 = (d1 ⟨ τ1 ==> τ2 ⇒ τ1' ==> τ2' ⟩) ∘ d1'} {d2 = (d2 ⟨ .⦇-⦈ ⇒ τ4 ==> τ4' ⟩) ∘ d2'} nfin (Eq0Ap (Eq0Cast x) x₁) ITApCast (TAAp (TACast wt x₃ ConsistHole2 x₅) wt₁ x₂) = _ , {!  ITApCast !} , {!   !}
+    parametricity21-lemman {d1 = (d1 ⟨ τ1 ==> τ2 ⇒ τ1' ==> τ2' ⟩) ∘ d1'} {d2 = (d2 ⟨ .(_ ==> _) ⇒ τ4 ==> τ4' ⟩) ∘ d2'} nfin (Eq0Ap (Eq0Cast x) x₁) ITApCast (TAAp (TACast wt x₃ (ConsistArr x₄ x₆) x₅) wt₁ x₂) = _ , {!   !} , {!   !} 
+    parametricity21-lemman nfin (Eq0TAp x) ITTLam wt = {!   !}
+    parametricity21-lemman nfin (Eq0TAp x) ITTApCast wt = {!   !}
 
     parametricity21-lemmar : ∀{d1 d2 d1'} →
       ¬(d2 final) →
@@ -1235,6 +1237,46 @@ module parametricity where
       d1' =0''' d2
     eq0'''-ctx ctx1 ctx1' ctx2 eqe eqin eq0 = {!   !}
 
+  cast-steps-preserve-=0''' : ∀{d1 d1' d2 τ1 τ2} →
+    (d1 ⟨ τ1 ⇒ τ2 ⟩) →> d1' →
+    d1 =0''' d2 →
+    d1' =0''' d2
+  cast-steps-preserve-=0''' (ITCastID x) eq0 = eq0
+  cast-steps-preserve-=0''' (ITCastSucceed x x₁ x₂) (Eq0CastL eq0) = eq0
+  cast-steps-preserve-=0''' (ITCastSucceed x x₁ x₂) (Eq0NoLeft x₃) = {!   !} -- impossible case noleft meaning
+  cast-steps-preserve-=0''' (ITCastFail x x₁ x₂) (Eq0CastL eq0) = Eq0FailedCastL eq0
+  cast-steps-preserve-=0''' (ITCastFail x x₁ x₂) (Eq0NoLeft x₃) = {!   !} -- impossible case by noleft meaning
+  cast-steps-preserve-=0''' (ITGround x) eq0 = Eq0CastL (Eq0CastL eq0)
+  cast-steps-preserve-=0''' (ITExpand x) eq0 = Eq0CastL (Eq0CastL eq0)
+
+  wt-ctxin : ∀{d d' ε Δ τ} →
+    Δ , ∅ , ∅ ⊢ d :: τ →
+    d == ε ⟦ d' ⟧ →
+    Σ[ τ' ∈ htyp ]( Δ , ∅ , ∅ ⊢ d' :: τ' )
+  wt-ctxin = {!   !}
+  {-
+    Idea bin -- all cast transitions preserve =0''' -- ITApCast ITCastID ITCastSucceed ITApCast ITExpand etc.
+    We rule out ITCastFail by assumption (d1 terminates successfully, d2 is allowed to indet.
+
+    Use =0''' to constrain forms, and find that ignoring cast forms, d2 can match the rule d1 uses.
+    Note: Can't use progress since we need the same part of each form to step.
+
+    I think I can phrase it as
+    d1 steps and they're equal or
+    they both step and they're equal or
+    d2 does a cast step and they're equal, and some ordering on casts decreases
+
+    Basically saying that we cannot pick the third option infinitely.
+
+    I would like to show that third part by saying only the cast steps can preserve =0'''. I.e. that ITLam and ITTLam do not.
+    However a difficulty here is Omega... if d1 -> d1 through ITLam then clearly =0''' is preserved...
+    So I guess I'll have to argue its termination via some ordering on terms based on lexicographic cast positioning?
+    At its core, I just need to show "eventually we take a step that's not a cast" -- though in the current rules formulation that may not be true,
+    since we can do ITExpand infinitely???
+
+    Or perhaps I can say 2nd case is d1 steps and d2 steps multiple times to something equal. That way I can do like
+    ITExpand -> ITApCast (Though even then that doesn't change the form and I may have to repeat that. Certainly only a finite number of times though?)
+  -}
   -- I think I need to remove the third branch. I think the statement of the conclusion should be
   -- d1' =0''' d2 + Σ[ d2' ∈ ihexp ] (d2 ↦* d2' × d1' =0''' d2')
   parametricity21-lemma-ctx : ∀{Δ d1 d2 d1' τ1 τ2} →
@@ -1243,12 +1285,45 @@ module parametricity where
     Δ , ∅ , ∅ ⊢ d2 :: τ2 →
     d1 =0''' d2 →
     d1 ↦ d1' →
-    d1' =0''' d2 + Σ[ d2' ∈ ihexp ] (d2 ↦ d2' × d1' =0''' d2') + Σ[ d2' ∈ ihexp ] ( d2 ↦ d2' × d1 =0''' d2')
-  parametricity21-lemma-ctx {d2 = d2} nindet wt1 wt2 eq0 (Step x x₁ x₂) with eq0-ctxin''' eq0 x 
-  ... | (d2' , ε2 , ctxeq2 , eq2 , eq2') with parametricity21-lemma {!   !} eq2 x₁
+    d1' =0''' d2 + Σ[ d2' ∈ ihexp ] (d2 ↦* d2' × d1' =0''' d2')
+    -- d1' =0''' d2 + Σ[ d2' ∈ ihexp ] (d2 ↦ d2' × d1' =0''' d2') + Σ[ d2' ∈ ihexp ] ( d2 ↦ d2' × d1 =0''' d2')
+  parametricity21-lemma-ctx {d2 = d2} nindet wt1 wt2 eq0 (Step ctxin step ctxout) with eq0-ctxin''' eq0 ctxin
+
+  -- See note above -- all of these preserve =0'''
+  parametricity21-lemma-ctx {d2 = d2} nindet wt1 wt2 eq0 (Step ctxin (ITCastID x) ctxout) | d2in , ε2 , ctxin' , Eq0CastL eq0in , eq0e = {!   !}
+  parametricity21-lemma-ctx {d2 = d2} nindet wt1 wt2 eq0 (Step ctxin (ITCastSucceed x x₁ x₂) ctxout) | d2in , ε2 , ctxin' , Eq0CastL eq0in , eq0e = {!   !}
+  parametricity21-lemma-ctx {d2 = d2} nindet wt1 wt2 eq0 (Step ctxin (ITCastFail x x₁ x₂) ctxout) | d2in , ε2 , ctxin' , Eq0CastL eq0in , eq0e = {!   !}
+  parametricity21-lemma-ctx {d2 = d2} nindet wt1 wt2 eq0 (Step ctxin (ITGround x) ctxout) | d2in , ε2 , ctxin' , Eq0CastL eq0in , eq0e = {!   !}
+  parametricity21-lemma-ctx {d2 = d2} nindet wt1 wt2 eq0 (Step ctxin (ITExpand x) ctxout) | d2in , ε2 , ctxin' , Eq0CastL eq0in , eq0e = {!   !}
+
+  -- These should preserve =0''' as well but on the right side. May need an inductive argument?
+  ... | .(_ ⟨ _ ⇒ _ ⟩) , ε2 , ctxin' , Eq0NoLeft (Eq0CastR x) , eq0e = {!   !}
+  ... | .(_ ⟨ _ ⇒⦇-⦈⇏ _ ⟩) , ε2 , ctxin' , Eq0NoLeft (Eq0FailedCastR x) , eq0e = {!   !}
+
+  parametricity21-lemma-ctx {d2 = d2} nindet wt1 wt2 eq0 (Step ctxin ITLam ctxout) 
+    | (.((_ ⟨ _ ⇒ _ ⟩) ∘ _) , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0NoLeft (Eq0CastR x)) x₁)) , eq0e) with wt-ctxin wt2 ctxin'
+  ... | _ , TAAp wt2' wt2'' x₂ = {!   !}
+  parametricity21-lemma-ctx {d2 = d2} nindet wt1 wt2 eq0 (Step ctxin ITLam ctxout) 
+    | .((_ ⟨ _ ⇒⦇-⦈⇏ _ ⟩) ∘ _) , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0NoLeft (Eq0FailedCastR x)) x₁)) , eq0e = 
+      {!   !} -- d2 contains a failed cast so it will be indet (must show it doesn't diverge?)
+  parametricity21-lemma-ctx {d2 = d2} nindet wt1 wt2 eq0 (Step ctxin ITApCast ctxout) 
+    | .(_ ∘ _) , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0Ap x x₁)) , eq0e = 
+      {!   !}
+
+-- These are the actual interesting cases.
+  parametricity21-lemma-ctx {d2 = d2} nindet wt1 wt2 eq0 (Step ctxin ITLam ctxout) 
+    | .((·λ _ [ _ ] _) ∘ _) , ε2 , ctxin' , 
+    Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0NoLeft (Eq0NoCasts (Eq0Lam x))) x₁)) , eq0e = 
+      Inr (_ , MSStep (Step ctxin' ITLam {! ctxout  !}) MSRefl , {!   !})
+  parametricity21-lemma-ctx {d2 = d2} nindet wt1 wt2 eq0 (Step ctxin step ctxout) | .(_ < _ >) , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0TAp x)) , eq0e = {!   !}
+
+
+
+  {- with parametricity21-lemma {!   !} eq2 x₁
   ...   | Inr (Inl (d2'' , step2 , eq)) = let (d2''' , ctxeq2' , eq3) = (eq0-ctxout''' eq eq2' x₂) in (Inr (Inl (d2''' , (Step ctxeq2 step2 ctxeq2') , eq3)))
   ...   | Inr (Inr (d2'' , step2 , eq)) = let (d2''' , ctxeq2' , eq3) = eq0-ctxout''' eq eq2' x in (Inr (Inr (_ , (Step ctxeq2 step2 ctxeq2') , eq3)))
   ...   | Inl eq = Inl {!   !}
+  -}
 
   parametricity21 :
     ∀{d1 d2 v1} →
