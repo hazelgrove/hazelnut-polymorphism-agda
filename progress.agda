@@ -29,7 +29,7 @@ module progress where
   ... | I x = I (INEHole (FIndet x))
   ... | BV x = I (INEHole (FBoxedVal x))
   progress (TAFailedCast wt y z w) with progress wt
-  ... | S (d' , Step x y z) = S (_ , Step (FHFailedCast x) y (FHFailedCast z))
+  ... | S (d' , Step x y' z') = S (_ , Step (FHFailedCast x) y' (FHFailedCast z'))
   ... | I x = I (IFailedCast (FIndet x) y z \{ refl → w ~refl})
   ... | BV x = I (IFailedCast (FBoxedVal x) y z \{ refl → w ~refl})
   progress (TATAp wf wt refl) with progress wt 
