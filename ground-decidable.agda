@@ -28,3 +28,9 @@ module ground-decidable where
   --   where
   --     lem' : ∀{τ1 τ2} → τ1 ==> τ2 == ⦇-⦈ ==> ⦇-⦈ → (τ1 ==> τ2) ground
   --     lem' refl = GHole
+
+  ground-match : ∀{τ τ'} →
+    τ ▸gnd τ' →
+    τ' ground
+  ground-match (MGArr x) = GArr
+  ground-match (MGForall x) = GForall
