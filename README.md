@@ -13,7 +13,7 @@ The proofs of each part of Theorem 3 can be found in:
 - [typed-elaboration.agda](typed-elaboration.agda)
 - [type-assignment-unicity.agda](type-assignment-unicity.agda)
 
-The proofs of each part of Theorem 4 can be found in:
+The proofs of each part of Theorem 1 can be found in:
 
 - [preservation.agda](preservation.agda)
 - [progress.agda](progress.agda)
@@ -27,4 +27,7 @@ The proofs of each part of Theorem 5 can be found in:
 Our work on parametricity and graduality can be found in:
 
 - [parametricity.agda](parametricity.agda)
+
+The proof of the static gradual guarantee (Property 1 of Definition 4) can be found in:
+  
 - [graduality.agda](graduality.agda)
