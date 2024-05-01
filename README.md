@@ -24,14 +24,14 @@ The proofs of each part of Theorem 6 can be found in:
 - [complete-preservation.agda](complete-preservation.agda)
 - [complete-progress.agda](complete-progress.agda)
 
-The proof of Theorem 2 is found in:
+The proof of Theorem 2 can be found in:
 
 - [parametricity.agda](parametricity.agda)
 
-The proof of Theorem 3 and Corollary 1 is found in:
+The proof of Theorem 3 and Corollary 1 can be found in:
 
 - [this isn't here yet](parametricity.agda)
 
-Our work on graduality, including the proof of the static gradual guarantee (Theorem 4) is in:
+The proof of Theorem 4 (the Static Gradual Guarantee) can be found in:
 
 - [graduality.agda](graduality.agda)
