@@ -17,7 +17,7 @@ The proofs of each part of Theorem 1 can be found in:
 
 - [preservation.agda](preservation.agda)
 - [progress.agda](progress.agda)
-- 
+
 The proofs of each part of Theorem 6 can be found in:
 
 - [complete-elaboration.agda](complete-elaboration.agda)
