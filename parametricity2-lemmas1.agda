@@ -1,4 +1,3 @@
-{-# OPTIONS --no-termination-check #-}
 {-# OPTIONS --allow-unsolved-metas #-}
 
 open import Nat
@@ -39,6 +38,25 @@ module parametricity2-lemmas1 where
     MSStep (Step (FHCast FHOuter) (ITExpand gnd') (FHCast FHOuter)) (MSStep (Step FHOuter (ITGround gnd') FHOuter) MSRefl) , 
     FIndet (ICastGroundHole (ground-match gnd') (ICastForall (ground-match-neq gnd') (ICastForall (flip (ground-match-neq gnd')) (ICastHoleGround (λ d' τ' → form d' τ' ⦇-⦈) x (ground-match gnd')))))
 
+  case-helper : ∀{d τ1} →
+    (d ⟨ τ1 ⇒ ⦇-⦈ ⟩) final → τ1 ≠ ⦇-⦈
+  case-helper (FBoxedVal (BVHoleCast x x₁)) = ground-not-hole x
+  case-helper (FIndet (ICastGroundHole x x₁)) = ground-not-hole x
+
+  fin-ground-cast : ∀{d τ τ'} →
+    d final → τ ▸gnd τ' → (d ⟨ τ ⇒ τ' ⟩) final
+  fin-ground-cast (FBoxedVal x) (MGArr x₁) = FBoxedVal (BVArrCast x₁ x)
+  fin-ground-cast (FBoxedVal x) (MGForall x₁) = FBoxedVal (BVForallCast x₁ x)
+  fin-ground-cast (FIndet x) (MGArr x₁) = FIndet (ICastArr x₁ x)
+  fin-ground-cast (FIndet x) (MGForall x₁) = FIndet (ICastForall x₁ x)
+
+  fin-ground-cast' : ∀{d τ τ'} →
+    d final → τ' ▸gnd τ → (d ⟨ τ ⇒ τ' ⟩) final
+  fin-ground-cast' (FBoxedVal x) (MGArr x₁) = FBoxedVal (BVArrCast (flip x₁) x)
+  fin-ground-cast' (FBoxedVal x) (MGForall x₁) = FBoxedVal (BVForallCast (flip x₁) x)
+  fin-ground-cast' (FIndet x) (MGArr x₁) = FIndet (ICastArr (flip x₁) x)
+  fin-ground-cast' (FIndet x) (MGForall x₁) = FIndet (ICastForall (flip x₁) x)
+
   mutual
     parametricity-onesided-lemma-doublecast-case : ∀{d1 τ d2 τ1 τ2 τ3} →
       τ1 ≠ τ2 → τ2 ≠ τ3 → τ2 ≠ ⦇-⦈ →
@@ -53,7 +71,7 @@ module parametricity2-lemmas1 where
     parametricity-onesided-lemma-doublecast-case {τ1 = .b} {τ2 = b} {τ3 = ⦇-⦈} neq neq' neq'' wt1 (TACast (TACast wt2 x₂ ConsistBase) x x₁) eq0 v fin = abort (neq refl)
     parametricity-onesided-lemma-doublecast-case {τ1 = τ1} {τ2 = ⦇-⦈} {τ3 = ⦇-⦈} neq neq' neq'' wt1 (TACast (TACast wt2 x₂ x₃) x x₁) eq0 v fin = abort (neq' refl)
     parametricity-onesided-lemma-doublecast-case {τ1 = .⦇-⦈} {τ2 = τ2} {τ3 = ⦇-⦈} neq neq' neq'' wt1 (TACast wt2₀@(TACast (TACast wt2 x₃ x₄) x₂ ConsistHole2) x x₁) (Eq0CastR eq0) v fin 
-      with parametricity-onesided-lemma-holecast-case wt1 wt2₀ eq0 v (fin-gndhole-lemma' fin)
+      with parametricity-onesided-lemma-holecast-case (case-helper fin) neq'' wt1 wt2₀ eq0 v (fin-gndhole-lemma' fin)
     ... | d2' , eq0' , steps , fin with ground-dec τ2
     ...   | Inl gnd = _ , Eq0CastR eq0' , evalctx-compose-ms steps (FHCast FHOuter) (FHCast FHOuter) , fin-gndhole-lemma fin gnd
     ...   | Inr gnd with ground-match-exists gnd x₂ neq''
@@ -86,7 +104,7 @@ module parametricity2-lemmas1 where
     parametricity-onesided-lemma-doublecast-case {d2 = _} {.⦇-⦈} {τ1 ==> τ2} {τ3 ==> τ4} neq neq' neq'' wt1 (TACast (TACast () x₂ ConsistHole2) x (ConsistArr x₁ x₄)) eq0 v (FBoxedVal (BVVal VLam)) | Inl gnd
     parametricity-onesided-lemma-doublecast-case {d2 = _} {.⦇-⦈} {τ1 ==> τ2} {τ3 ==> τ4} neq neq' neq'' wt1 (TACast (TACast () x₂ ConsistHole2) x (ConsistArr x₁ x₄)) eq0 v (FBoxedVal (BVVal VTLam)) | Inl gnd
     parametricity-onesided-lemma-doublecast-case {d2 = _} {.⦇-⦈} {τ1 ==> τ2} {τ3 ==> τ4} neq neq' neq'' wt1 (TACast (TACast wt2 x₂ ConsistHole2) x (ConsistArr x₁ x₄)) (Eq0CastR eq0) v 
-      (FBoxedVal (BVHoleCast x₃ x₅)) | _ with parametricity-onesided-lemma-holecast-case wt1 ((TACast wt2 x₂ ConsistHole2)) eq0 v (FBoxedVal x₅)
+      (FBoxedVal (BVHoleCast x₃ x₅)) | _ with parametricity-onesided-lemma-holecast-case (ground-not-hole x₃) neq'' wt1 ((TACast wt2 x₂ ConsistHole2)) eq0 v (FBoxedVal x₅)
     ... | d2' , eq0' , steps , fin = _ , Eq0CastR eq0' , evalctx-compose-ms steps (FHCast FHOuter) (FHCast FHOuter) , fin-arr-lemma fin neq'
     parametricity-onesided-lemma-doublecast-case {d2 = _} {.⦇-⦈} {τ1 ==> τ2} {τ3 ==> τ4} neq neq' neq'' wt1 (TACast (TACast () x₂ ConsistHole2) x (ConsistArr x₁ x₄)) eq0 v (FBoxedVal (BVVal VConst)) | Inr gnd
     parametricity-onesided-lemma-doublecast-case {d2 = _} {.⦇-⦈} {τ1 ==> τ2} {τ3 ==> τ4} neq neq' neq'' wt1 (TACast (TACast () x₂ ConsistHole2) x (ConsistArr x₁ x₄)) eq0 v (FBoxedVal (BVVal VLam)) | Inr gnd
@@ -98,7 +116,7 @@ module parametricity2-lemmas1 where
     parametricity-onesided-lemma-doublecast-case {d2 = _} {.⦇-⦈} {τ1 ==> τ2} {τ3 ==> τ4} neq neq' neq'' wt1 (TACast (TACast TAEHole x₂ ConsistHole2) x (ConsistArr x₁ x₄)) eq0 v (FIndet x₅) | Inl gnd = _ , (Eq0CastR (Eq0CastR eq0)) , MSRefl , FIndet (ICastArr neq' (ICastHoleGround (λ d' τ' ()) x₅ gnd))
     parametricity-onesided-lemma-doublecast-case {d2 = _} {.⦇-⦈} {τ1 ==> τ2} {τ3 ==> τ4} neq neq' neq'' wt1 (TACast (TACast (TANEHole wt2) x₂ ConsistHole2) x (ConsistArr x₁ x₄)) eq0 v (FIndet x₅) | Inl gnd = _ , (Eq0CastR (Eq0CastR eq0)) , MSRefl , FIndet (ICastArr neq' (ICastHoleGround (λ d' τ' ()) x₅ gnd))
     parametricity-onesided-lemma-doublecast-case {d2 = _} {.⦇-⦈} {τ1 ==> τ2} {τ3 ==> τ4} neq neq' neq'' wt1 (TACast wt2₀@(TACast (TACast wt2 x₃ x₆) x₂ ConsistHole2) x (ConsistArr x₁ x₄)) (Eq0CastR eq0) v (FIndet (ICastGroundHole x₅ x₇)) 
-      | Inl gnd with parametricity-onesided-lemma-holecast-case wt1 wt2₀ eq0 v (FIndet x₇)
+      | Inl gnd with parametricity-onesided-lemma-holecast-case (ground-not-hole x₅) neq'' wt1 wt2₀ eq0 v (FIndet x₇)
     ... | d2' , eq0' , steps , fin = _ , Eq0CastR eq0' , evalctx-compose-ms steps (FHCast FHOuter) (FHCast FHOuter) , fin-arr-lemma fin neq'
     parametricity-onesided-lemma-doublecast-case {τ1 = .⦇-⦈} {τ2 = τ1 ==> τ2} {τ3 = τ3 ==> τ4} neq neq' neq'' wt1 (TACast (TACast wt2 x₂ ConsistHole2) x (ConsistArr x₁ x₄)) eq0 v (FIndet x₅)
       | Inr gnd with ground-match-exists gnd x₂ neq''
@@ -107,64 +125,69 @@ module parametricity2-lemmas1 where
     parametricity-onesided-lemma-doublecast-case {d2 = .⦇-⦈} {.⦇-⦈} {τ1 ==> τ2} {τ3 ==> τ4} neq neq' neq'' wt1 (TACast (TACast TAEHole x₂ ConsistHole2) x (ConsistArr x₁ x₄)) eq0 v (FIndet x₅) | Inr gnd | τg ==> τg₁ , gnd' = _ , Eq0CastR (Eq0CastR (Eq0CastR eq0)) , MSStep (Step (FHCast FHOuter) (ITExpand gnd') (FHCast FHOuter)) MSRefl , FIndet (ICastArr neq' (ICastArr (gnd-ngnd-neq (ground-match gnd') gnd) (ICastHoleGround (λ d' τ' ()) x₅ (ground-match gnd'))))
     parametricity-onesided-lemma-doublecast-case {d2 = .(⦇⌜ _ ⌟⦈)} {.⦇-⦈} {τ1 ==> τ2} {τ3 ==> τ4} neq neq' neq'' wt1 (TACast (TACast (TANEHole wt2) x₂ ConsistHole2) x (ConsistArr x₁ x₄)) eq0 v (FIndet x₅) | Inr gnd | τg ==> τg₁ , gnd' = _ , Eq0CastR (Eq0CastR (Eq0CastR eq0)) , MSStep (Step (FHCast FHOuter) (ITExpand gnd') (FHCast FHOuter)) MSRefl , FIndet (ICastArr neq' (ICastArr (gnd-ngnd-neq (ground-match gnd') gnd) (ICastHoleGround (λ d' τ' ()) x₅ (ground-match gnd'))))
     parametricity-onesided-lemma-doublecast-case {d2 = .(_ ⟨ _ ⇒ ⦇-⦈ ⟩)} {.⦇-⦈} {τ1 ==> τ2} {τ3 ==> τ4} neq neq' neq'' wt1 (TACast wt2₀@(TACast (TACast wt2 x₃ x₆) x₂ ConsistHole2) x (ConsistArr x₁ x₄)) (Eq0CastR eq0) v (FIndet (ICastGroundHole x₅ x₇)) 
-      | Inr gnd | τg ==> τg₁ , gnd' with parametricity-onesided-lemma-holecast-case wt1 wt2₀ eq0 v (FIndet x₇)
+      | Inr gnd | τg ==> τg₁ , gnd' with parametricity-onesided-lemma-holecast-case (ground-not-hole x₅) neq'' wt1 wt2₀ eq0 v (FIndet x₇)
     ... | d2' , eq0' , steps , fin = _ , Eq0CastR eq0' , evalctx-compose-ms steps (FHCast FHOuter) (FHCast FHOuter) , fin-arr-lemma fin neq'
     parametricity-onesided-lemma-doublecast-case {τ1 = .(_ ==> _)} {τ3 = τ3 ==> τ4} neq neq' neq'' wt1 (TACast (TACast wt2 x₂ (ConsistArr x₃ x₆)) x (ConsistArr x₁ x₄)) eq0 v (FIndet x₅) = _ , (Eq0CastR (Eq0CastR eq0)) , MSRefl , FIndet (ICastArr neq' (ICastArr neq x₅))
     parametricity-onesided-lemma-doublecast-case {τ1 = τ1} {τ3 = ·∀ τ3} neq neq' neq'' wt1 (TACast (TACast wt2 x₂ x₃) x x₁) eq0 v fin = {!   !}
 
     parametricity-onesided-lemma-holecast-case : ∀{d1 τ d2 τ1 τ3} →
+      τ1 ≠ ⦇-⦈ → τ3 ≠ ⦇-⦈ →
       ∅ ⊢ d1 :: τ →
       ∅ ⊢ (d2 ⟨ τ1 ⇒ ⦇-⦈ ⟩) ⟨ ⦇-⦈ ⇒ τ3 ⟩ :: τ3 →
       d1 =0cr d2 →
       d1 val →
       d2 final →
       Σ[ d2' ∈ ihexp ] (d1 =0cr d2' × ((d2 ⟨ τ1 ⇒ ⦇-⦈ ⟩) ⟨ ⦇-⦈ ⇒ τ3 ⟩)↦* d2' × d2' final)
-    parametricity-onesided-lemma-holecast-case wt1 wt2 eq0 v fin = {!   !}
-    {- with ground-dec τ1 | ground-dec τ3 | ~dec τ1 τ3
-  ...   | Inl g1 | Inl g2 | Inl consis rewrite gnd-gnd-consis-eq g1 g2 consis with parametricity-onesided-lemma-valr wt1 wt2 eq0 v
-  ... | d2' , eq0' , steps , fin = _ , eq0' , MSStep (Step FHOuter (ITCastSucceed g2) FHOuter) steps , fin
-  parametricity-onesided-lemma-valr wt1 (TACast {τ1 = τ2} {τ2 = τ3} (TACast {τ1 = τ1} wt2 x₂ x₃) x x₁) (Eq0CastR (Eq0CastR eq0)) v | Inr neq | Inr neq' | Inl refl
-    | Inl g1 | Inr g2 | Inl consis with ground-match-exists g2 x (flip neq)
-  ... | τ3' , g2' rewrite gnd-gnd-consis-eq g1 (ground-match g2') (consist-ground-consist consis g2')
-                  with parametricity-onesided-lemma-valr wt1 (TACast wt2 x (~sym (consist-ground-consist ~refl g2'))) (Eq0CastR eq0) v
-  ... | d2' , eq0' , steps , fin = _ , eq0' , MSStep (Step FHOuter (ITExpand g2') FHOuter)
-                    (MSStep (Step (FHCast FHOuter) (ITCastSucceed (ground-match g2')) (FHCast FHOuter)) steps) , fin
-  parametricity-onesided-lemma-valr wt1 (TACast {τ1 = τ2} {τ2 = τ3} (TACast {τ1 = τ1} wt2 x₂ x₃) x x₁) (Eq0CastR (Eq0CastR eq0)) v | Inr neq | Inr neq' | Inl refl
-    | Inr g1 | Inl g2 | Inl consis with ground-match-exists g1 (wf-ta CtxWFEmpty wt2) neq'
-  ... | τ1' , g1' rewrite ! (gnd-gnd-consis-eq (ground-match g1') g2 (~sym (consist-ground-consist (~sym consis) g1')))
-                  with parametricity-onesided-lemma-valr wt1 (TACast wt2 x (consist-ground-consist ~refl g1')) (Eq0CastR eq0) v
-  ...   | d2' , eq0' , steps , fin = _ , eq0' , MSStep (Step (FHCast FHOuter) (ITGround g1') (FHCast FHOuter))
-                    (MSStep (Step FHOuter (ITCastSucceed (ground-match g1')) FHOuter) steps) , fin
-  parametricity-onesided-lemma-valr wt1 (wt2₀@(TACast {τ1 = τ2} {τ2 = τ3} (TACast {τ1 = τ1} wt2 x₂ x₃) x x₁)) (Eq0CastR (Eq0CastR eq0)) v | Inr neq | Inr neq' | Inl refl
-    | Inr g1 | Inr g2 | Inl consis with ground-match-exists g1 (wf-ta CtxWFEmpty wt2) neq' | ground-match-exists g2 x (flip neq)
-  ... | τ1' , g1' | τ3' , g2' with preservation (preservation (preservation wt2₀ step1) step2) step3 
-    where
-        eq = (gnd-gnd-consis-eq (ground-match g1') (ground-match g2') (consist-ground-consist (~sym (consist-ground-consist (~sym consis) g1')) g2'))
-        ITCastSucceed' : ∀{d τ1 τ2} → τ1 == τ2 → τ1 ground → (d ⟨ τ1 ⇒ ⦇-⦈ ⇒ τ2 ⟩) →> d
-        ITCastSucceed' eq gnd rewrite eq = ITCastSucceed gnd 
-        step1 = (Step (FHCast FHOuter) (ITGround g1') (FHCast FHOuter))
-        step2 = (Step FHOuter (ITExpand g2') FHOuter)
-        step3 = (Step (FHCast FHOuter) (ITCastSucceed' eq (ground-match g1')) (FHCast FHOuter))
-  ... | TACast (TACast wt2' _ consis1) _ consis2 = _ , {!   !} , MSStep step1 (MSStep step2 (MSStep step3 {!   !})) , {! τ1 τ3  !}
-    where
-          eq = (gnd-gnd-consis-eq (ground-match g1') (ground-match g2') (consist-ground-consist (~sym (consist-ground-consist (~sym consis) g1')) g2'))
+    parametricity-onesided-lemma-holecast-case {τ1 = τ1} {τ3 = τ3} neq neq' wt1 (TACast (TACast wt2 x₂ x₃) x x₁) eq0 v fin  with ground-dec τ1 | ground-dec τ3
+    ... | Inl g1 | Inl g2 with ~dec τ1 τ3
+    ...   | Inl consis rewrite gnd-gnd-consis-eq g1 g2 consis = _ , eq0 ,  MSStep (Step FHOuter (ITCastSucceed g2) FHOuter) MSRefl , fin
+    ...   | Inr consis = _ , Eq0FailedCastR eq0 , MSStep (Step FHOuter (ITCastFail g1 g2 consis) FHOuter) MSRefl , FIndet (IFailedCast fin g1 g2 (~̸-≠ consis))
+    parametricity-onesided-lemma-holecast-case neq neq' wt1 (TACast {τ1 = τ2} {τ2 = τ3} (TACast {τ1 = τ1} wt2 x₂ x₃) x x₁) eq0 v fin
+      | Inl g1 | Inr g2 with ground-match-exists g2 x neq'
+    ... | τ3' , g2' with ~dec τ1 τ3'
+    ...   | Inl consis rewrite gnd-gnd-consis-eq g1 (ground-match g2') consis
+            = _ , Eq0CastR eq0 , MSStep (Step FHOuter (ITExpand g2') FHOuter) (MSStep (Step (FHCast FHOuter) (ITCastSucceed (ground-match g2')) (FHCast FHOuter)) MSRefl) , fin-ground-cast' fin g2'
+    ...   | Inr consis = _ , Eq0CastR (Eq0FailedCastR eq0) , MSStep (Step FHOuter (ITExpand g2') FHOuter) (MSStep (Step (FHCast FHOuter) (ITCastFail g1 (ground-match g2') consis) (FHCast FHOuter)) MSRefl), fin-ground-cast' (FIndet (IFailedCast fin g1 (ground-match g2') (~̸-≠ consis))) g2'
+    parametricity-onesided-lemma-holecast-case neq neq' wt1 (TACast {τ1 = τ2} {τ2 = τ3} (TACast {τ1 = τ1} wt2 x₂ x₃) x x₁) eq0 v fin
+      | Inr g1 | Inl g2 with ground-match-exists g1 (wf-ta CtxWFEmpty wt2) neq
+    ... | τ1' , g1' with ~dec τ1' τ3
+    ...   | Inl consis rewrite ! (gnd-gnd-consis-eq (ground-match g1') g2 consis) 
+            = _ , Eq0CastR eq0 , MSStep (Step (FHCast FHOuter) (ITGround g1') (FHCast FHOuter))
+              (MSStep (Step FHOuter (ITCastSucceed (ground-match g1')) FHOuter) MSRefl) , fin-ground-cast fin g1'
+    ...   | Inr consis = _ , Eq0FailedCastR (Eq0CastR eq0) , MSStep (Step (FHCast FHOuter) (ITGround g1') (FHCast FHOuter))
+              (MSStep (Step FHOuter (ITCastFail (ground-match g1') g2 consis) FHOuter) MSRefl) , FIndet (IFailedCast (fin-ground-cast fin g1') (ground-match g1') g2 (~̸-≠ consis))
+    parametricity-onesided-lemma-holecast-case neq neq' wt1 (wt2₀@(TACast {τ1 = τ2} {τ2 = τ3} (TACast {τ1 = τ1} wt2 x₂ x₃) x x₁)) eq0 v fin
+      | Inr g1 | Inr g2 with ground-match-exists g1 (wf-ta CtxWFEmpty wt2) neq | ground-match-exists g2 x neq'
+    ... | τ1' , g1' | τ3' , g2' with ~dec τ1' τ3'
+    ...   | Inl consis with preservation (preservation (preservation wt2₀ step1) step2) step3 
+      where
+          eq = gnd-gnd-consis-eq (ground-match g1') (ground-match g2') consis
           ITCastSucceed' : ∀{d τ1 τ2} → τ1 == τ2 → τ1 ground → (d ⟨ τ1 ⇒ ⦇-⦈ ⇒ τ2 ⟩) →> d
           ITCastSucceed' eq gnd rewrite eq = ITCastSucceed gnd 
           step1 = (Step (FHCast FHOuter) (ITGround g1') (FHCast FHOuter))
           step2 = (Step FHOuter (ITExpand g2') FHOuter)
           step3 = (Step (FHCast FHOuter) (ITCastSucceed' eq (ground-match g1')) (FHCast FHOuter))
-  parametricity-onesided-lemma-valr wt1 (TACast {τ1 = τ2} {τ2 = τ3} (TACast {τ1 = τ1} wt2 x₂ x₃) x x₁) (Eq0CastR (Eq0CastR eq0)) v | Inr neq | Inr neq' | Inl refl
-    | Inl g1 | Inl g2 | Inr consis with parametricity-onesided-lemma-valr wt1 wt2 eq0 v
-  ... | d2' , eq0' , steps , fin = _ , Eq0FailedCastR eq0' , MSStep (Step FHOuter (ITCastFail g1 g2 consis) FHOuter) (evalctx-compose-ms steps (FHFailedCast FHOuter) (FHFailedCast FHOuter)) , FIndet (IFailedCast fin g1 g2 (~̸-≠ consis))
-  parametricity-onesided-lemma-valr wt1 (TACast {τ1 = τ2} {τ2 = τ3} (TACast {τ1 = τ1} wt2 x₂ x₃) x x₁) (Eq0CastR (Eq0CastR eq0)) v | Inr neq | Inr neq' | Inl refl
-    | Inl g1 | Inr g2 | Inr consis = _ , {!   !} , {!   !} , {!   !}
-  parametricity-onesided-lemma-valr wt1 (TACast {τ1 = τ2} {τ2 = τ3} (TACast {τ1 = τ1} wt2 x₂ x₃) x x₁) (Eq0CastR (Eq0CastR eq0)) v | Inr neq | Inr neq' | Inl refl
-    | Inr g1 | Inl g2 | Inr consis = _ , {!   !} , {!   !} , {!   !}
-  parametricity-onesided-lemma-valr wt1 (TACast {τ1 = τ2} {τ2 = τ3} (TACast {τ1 = τ1} wt2 x₂ x₃) x x₁) (Eq0CastR (Eq0CastR eq0)) v | Inr neq | Inr neq' | Inl refl
-    | Inr g1 | Inr g2 | Inr consis = _ , {!   !} , {!   !} , {!   !}
-  -}
+    ...   | wt2₀'@(TACast (TACast wt2' _ consis1) _ consis2) with parametricity-onesided-lemma-doublecast-case (ground-match-neq g1') (flip (ground-match-neq g2')) (ground-not-hole (ground-match g2')) wt1 wt2₀' eq0 v fin
+    ...     | d2' , eq0' , steps , fin = d2' , eq0' , MSStep step1 (MSStep step2 (MSStep step3 steps)) , fin
+      where
+            eq = (gnd-gnd-consis-eq (ground-match g1') (ground-match g2') consis)
+            ITCastSucceed' : ∀{d τ1 τ2} → τ1 == τ2 → τ1 ground → (d ⟨ τ1 ⇒ ⦇-⦈ ⇒ τ2 ⟩) →> d
+            ITCastSucceed' eq gnd rewrite eq = ITCastSucceed gnd 
+            step1 = (Step (FHCast FHOuter) (ITGround g1') (FHCast FHOuter))
+            step2 = (Step FHOuter (ITExpand g2') FHOuter)
+            step3 = (Step (FHCast FHOuter) (ITCastSucceed' eq (ground-match g1')) (FHCast FHOuter))
+    parametricity-onesided-lemma-holecast-case neq neq' wt1 (wt2₀@(TACast {τ1 = τ2} {τ2 = τ3} (TACast {τ1 = τ1} wt2 x₂ x₃) x x₁)) eq0 v fin
+      | Inr g1 | Inr g2 | τ1' , g1' | τ3' , g2' | Inr consis = 
+          _ , Eq0CastR (Eq0FailedCastR (Eq0CastR eq0)) , 
+            MSStep (Step (FHCast FHOuter) (ITGround g1') (FHCast FHOuter))
+            (MSStep (Step FHOuter (ITExpand g2') FHOuter)
+            (MSStep (Step (FHCast FHOuter) (ITCastFail (ground-match g1') (ground-match g2') consis) (FHCast FHOuter)) MSRefl)) , 
+              fin-ground-cast' (FIndet (IFailedCast (fin-ground-cast fin g1') (ground-match g1') (ground-match g2') (~̸-≠ consis))) g2'
+    
 
-
+  {-# TERMINATING #-}
+  {- The case this complains about is when we resolve an inner cast and have to bring in consistency constraints from an outer cast. -}
+  {- Now, this is terminating on syntactic size of d2, so that's not an issue. (termination structure TODO) -}
   parametricity-onesided-lemma-valr :
     ∀{d1 d2 τ1 τ2} →
     ∅ ⊢ d1 :: τ1 →
@@ -180,7 +203,7 @@ module parametricity2-lemmas1 where
   ...   | d2' , eq0' , steps , fin = _ , eq0' , MSStep (Step (FHCast FHOuter) ITCastID (FHCast FHOuter)) steps , fin
   parametricity-onesided-lemma-valr wt1 (TACast {τ1 = τ2} {τ2 = τ3} (TACast {τ1 = τ1} wt2 x₂ x₃) x x₁) (Eq0CastR (Eq0CastR eq0)) v | Inr neq
     | Inr neq' | Inl refl with parametricity-onesided-lemma-valr wt1 wt2 eq0 v
-  ... | d2' , eq0' , steps , fin with parametricity-onesided-lemma-holecast-case wt1 (TACast (TACast (preservation-trans wt2 steps) x₂ x₃) x x₁) eq0' v fin
+  ... | d2' , eq0' , steps , fin with parametricity-onesided-lemma-holecast-case neq' (flip neq) wt1 (TACast (TACast (preservation-trans wt2 steps) x₂ x₃) x x₁) eq0' v fin
   ... | d2'' , eq0'' , steps' , fin' = _ , eq0'' , mstrans (evalctx-compose-ms steps (FHCast (FHCast FHOuter)) (FHCast (FHCast FHOuter))) steps' , fin'
   parametricity-onesided-lemma-valr wt1 (TACast {τ1 = τ2} {τ2 = τ3} (TACast {τ1 = τ1} wt2 x₂ x₃) x x₁) (Eq0CastR (Eq0CastR eq0)) v | Inr neq
     | _ | Inr neq' with htyp-eq-dec τ1 τ2 
@@ -241,3 +264,4 @@ module parametricity2-lemmas1 where
   parametricity-onesided-lemma (TACast wt1 x₁ x₂) wt2 (Eq0CastL eq0) (BVHoleCast x bv) with parametricity-onesided-lemma wt1 wt2 eq0 bv
   ...  | (d2' , eq0' , steps , fin) = d2' , Eq0CastL eq0' , steps , fin
   parametricity-onesided-lemma wt1 wt2 (Eq0NoLeft x₁) (BVHoleCast x bv) = abort (π1 (eq0ccastr-meaning x₁) refl)
+ 

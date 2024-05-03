@@ -27,6 +27,12 @@ module lemmas-ground where
   ground-neq~ GForall GArr neq = λ ()
   ground-neq~ GForall GForall neq = λ _ → neq refl
 
+  ground-not-hole : ∀{τ} →
+    τ ground → τ ≠ ⦇-⦈
+  ground-not-hole GBase = λ ()
+  ground-not-hole GArr = λ ()
+  ground-not-hole GForall = λ ()
+
   gnd-gnd-consis-eq : ∀{τ1 τ2} →
     τ1 ground → τ2 ground → τ1 ~ τ2 →
     τ1 == τ2
