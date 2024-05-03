@@ -214,26 +214,30 @@ module parametricity2-lemmas1 where
   helper (x0 , x1 , x2 , x3) = (x0 , Eq0NoLeft x1 , x2 , x3)
 
   parametricity-onesided-lemma-val :
-    ∀{d1 d2} →
+    ∀{d1 d2 τ1 τ2} →
+    ∅ ⊢ d1 :: τ1 →
+    ∅ ⊢ d2 :: τ2 →
     d1 =0c d2 →
     d1 val →
     Σ[ d2' ∈ ihexp ]( d1 =0c d2' × d2 ↦* d2' × d2' final)
-  parametricity-onesided-lemma-val (Eq0NoLeft x) VConst = helper (parametricity-onesided-lemma-valr {!   !} {!   !} x VConst)
-  parametricity-onesided-lemma-val (Eq0NoLeft x) VLam = helper (parametricity-onesided-lemma-valr {!   !} {!   !} x VLam)
-  parametricity-onesided-lemma-val (Eq0NoLeft x) VTLam = helper (parametricity-onesided-lemma-valr {!   !} {!   !} x VTLam)
+  parametricity-onesided-lemma-val wt1 wt2 (Eq0NoLeft x) VConst = helper (parametricity-onesided-lemma-valr wt1 wt2 x VConst)
+  parametricity-onesided-lemma-val wt1 wt2 (Eq0NoLeft x) VLam = helper (parametricity-onesided-lemma-valr wt1 wt2 x VLam)
+  parametricity-onesided-lemma-val wt1 wt2 (Eq0NoLeft x) VTLam = helper (parametricity-onesided-lemma-valr wt1 wt2 x VTLam)
 
   parametricity-onesided-lemma :
-    ∀{d1 d2} →
+    ∀{d1 d2 τ1 τ2} →
+    ∅ ⊢ d1 :: τ1 →
+    ∅ ⊢ d2 :: τ2 →
     d1 =0c d2 →
     d1 boxedval →
     Σ[ d2' ∈ ihexp ]( d1 =0c d2' × d2 ↦* d2' × d2' final)
-  parametricity-onesided-lemma eq0 (BVVal x) = parametricity-onesided-lemma-val eq0 x
-  parametricity-onesided-lemma (Eq0CastL eq0) (BVArrCast x bv) with parametricity-onesided-lemma eq0 bv
+  parametricity-onesided-lemma wt1 wt2 eq0 (BVVal x) = parametricity-onesided-lemma-val wt1 wt2 eq0 x
+  parametricity-onesided-lemma (TACast wt1 x₁ x₂) wt2 (Eq0CastL eq0) (BVArrCast x bv) with parametricity-onesided-lemma wt1 wt2 eq0 bv
   ...  | (d2' , eq0' , steps , fin) = d2' , Eq0CastL eq0' , steps , fin
-  parametricity-onesided-lemma (Eq0NoLeft x₁) (BVArrCast x bv) = abort (π1 (eq0ccastr-meaning x₁) refl)
-  parametricity-onesided-lemma (Eq0CastL eq0) (BVForallCast x bv) with parametricity-onesided-lemma eq0 bv
+  parametricity-onesided-lemma wt1 wt2 (Eq0NoLeft x₁) (BVArrCast x bv) = abort (π1 (eq0ccastr-meaning x₁) refl)
+  parametricity-onesided-lemma (TACast wt1 x₁ x₂) wt2 (Eq0CastL eq0) (BVForallCast x bv) with parametricity-onesided-lemma wt1 wt2 eq0 bv
   ...  | (d2' , eq0' , steps , fin) = d2' , Eq0CastL eq0' , steps , fin
-  parametricity-onesided-lemma (Eq0NoLeft x₁) (BVForallCast x bv) = abort (π1 (eq0ccastr-meaning x₁) refl)
-  parametricity-onesided-lemma (Eq0CastL eq0) (BVHoleCast x bv) with parametricity-onesided-lemma eq0 bv
+  parametricity-onesided-lemma wt1 wt2 (Eq0NoLeft x₁) (BVForallCast x bv) = abort (π1 (eq0ccastr-meaning x₁) refl)
+  parametricity-onesided-lemma (TACast wt1 x₁ x₂) wt2 (Eq0CastL eq0) (BVHoleCast x bv) with parametricity-onesided-lemma wt1 wt2 eq0 bv
   ...  | (d2' , eq0' , steps , fin) = d2' , Eq0CastL eq0' , steps , fin
-  parametricity-onesided-lemma (Eq0NoLeft x₁) (BVHoleCast x bv) = abort (π1 (eq0ccastr-meaning x₁) refl)
+  parametricity-onesided-lemma wt1 wt2 (Eq0NoLeft x₁) (BVHoleCast x bv) = abort (π1 (eq0ccastr-meaning x₁) refl)

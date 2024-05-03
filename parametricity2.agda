@@ -21,10 +21,19 @@ open import lemmas-ground
 module parametricity2 where
 
   parametricity21 :
-    ∀{d1 d2 v1} →
+    ∀{d1 d2 v1 τ1 τ2} →
+    ∅ ⊢ d1 :: τ1 →
+    ∅ ⊢ d2 :: τ2 →
     d1 =0c d2 →
     d1 ↦* v1 →
     v1 boxedval →
     Σ[ v2 ∈ ihexp ]( d2 ↦* v2 × ((v2 boxedval × v1 =0c v2) + v2 indet ))
-  parametricity21 eq0 step bv = {!   !}
+  parametricity21 wt1 wt2 eq0 MSRefl bv with parametricity-onesided-lemma wt1 wt2 eq0 bv
+  ... | d2' , eq0' , steps , FBoxedVal x = d2' , steps , Inl (x , eq0')
+  ... | d2' , eq0' , steps , FIndet x = d2' , steps , Inr x
+  parametricity21 wt1 wt2 eq0 (MSStep x step) bv with parametricity21-lemma-ctx wt1 wt2 eq0 x
+  ... | Inl next  = parametricity21 (preservation wt1 x) wt2 next step bv
+  ... | Inr (d2' , steps , Inr x₁) = d2' , steps , Inr x₁
+  ... | Inr (d2' , steps , Inl x₁) with parametricity21 (preservation wt1 x) (preservation-trans wt2 steps) x₁ step bv
+  ...   | v2 , steps' , next = v2 , mstrans steps steps' , next
           
