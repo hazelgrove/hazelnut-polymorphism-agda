@@ -227,7 +227,7 @@ module core where
                  -- d final → -- red brackets
                  τ1 ground →
                  τ2 ground →
-                 τ1 ~̸  τ2 →
+                 τ1 ~̸ τ2 →
                  (d ⟨ τ1 ⇒ ⦇-⦈ ⇒ τ2 ⟩) →> (d ⟨ τ1 ⇒⦇-⦈⇏ τ2 ⟩)
     ITApCast : ∀{d1 d2 τ1 τ2 τ1' τ2' } →
                -- d1 final → -- red brackets

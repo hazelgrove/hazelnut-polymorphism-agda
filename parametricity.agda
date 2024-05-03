@@ -393,4 +393,4 @@ module parametricity where
     let d1c = (dcompleteid-elab ec elab1) in
     let d2c = (dcompleteid-elab ec' elab2) in
     let (v2 , v2eval , v2bv , eq0') = parametricity11_rec d1c d2c (typed-elaboration-syn CtxWFEmpty elab1) (typed-elaboration-syn CtxWFEmpty elab2) (eq0-eq0' d1c d2c (eq0-elab-syn eeq elab1 elab2)) eval bv in
-    (v2 , v2eval , v2bv , eq0'-eq0 eq0')     
+    (v2 , v2eval , v2bv , eq0'-eq0 eq0')
