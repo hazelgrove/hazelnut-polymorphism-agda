@@ -1,4 +1,5 @@
 {-# OPTIONS --no-termination-check #-}
+{-# OPTIONS --allow-unsolved-metas #-}
 
 open import Nat
 open import Prelude
@@ -16,7 +17,7 @@ open import lemmas-wf
 open import eq-dec
 open import lemmas-ground
 
-module parametricity2 where
+module parametricity2-lemmas1 where
 
   {- These inductions are valid because the syntactic size decreases every time except in the expand+ground case -}
   useless-cast-cases : ∀{d d1 τ2} →

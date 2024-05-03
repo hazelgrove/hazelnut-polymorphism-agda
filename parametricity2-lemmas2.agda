@@ -1,4 +1,5 @@
 {-# OPTIONS --no-termination-check #-}
+{-# OPTIONS --allow-unsolved-metas #-}
 
 open import Nat
 open import Prelude
