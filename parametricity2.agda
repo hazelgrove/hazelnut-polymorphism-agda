@@ -316,13 +316,15 @@ module parametricity2 where
 
   mstrans : ∀{d d' d''} →
     d ↦* d' → d' ↦* d'' → d ↦* d''
-  mstrans = {!   !}
+  mstrans MSRefl ms2 = ms2
+  mstrans (MSStep x ms1) ms2 = MSStep x (mstrans ms1 ms2)
 
   preservation-trans : ∀ { d d' τ } →
     ∅ ⊢ d :: τ →
     d ↦* d' →
     ∅ ⊢ d' :: τ
-  preservation-trans = {!   !}
+  preservation-trans wt MSRefl = wt
+  preservation-trans wt (MSStep x ms) = preservation-trans (preservation wt x) ms
 
   fin-arr-lemma : ∀{d τ1 τ2 τ3 τ4} →
     d final → τ1 ==> τ2 ≠ τ3 ==> τ4 → (d ⟨ τ1 ==> τ2 ⇒ τ3 ==> τ4 ⟩) final
