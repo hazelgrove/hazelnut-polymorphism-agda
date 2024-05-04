@@ -190,8 +190,6 @@ module parametricity2-lemmas1 where
     ...   | Inl consis with preservation (preservation (preservation wt2₀ step1) step2) step3 
       where
           eq = gnd-gnd-consis-eq (ground-match g1') (ground-match g2') consis
-          ITCastSucceed' : ∀{d τ1 τ2} → τ1 == τ2 → τ1 ground → (d ⟨ τ1 ⇒ ⦇-⦈ ⇒ τ2 ⟩) →> d
-          ITCastSucceed' eq gnd rewrite eq = ITCastSucceed gnd 
           step1 = (Step (FHCast FHOuter) (ITGround g1') (FHCast FHOuter))
           step2 = (Step FHOuter (ITExpand g2') FHOuter)
           step3 = (Step (FHCast FHOuter) (ITCastSucceed' eq (ground-match g1')) (FHCast FHOuter))
@@ -199,8 +197,6 @@ module parametricity2-lemmas1 where
     ...     | d2' , eq0' , steps , fin = d2' , eq0' , MSStep step1 (MSStep step2 (MSStep step3 steps)) , fin
       where
             eq = (gnd-gnd-consis-eq (ground-match g1') (ground-match g2') consis)
-            ITCastSucceed' : ∀{d τ1 τ2} → τ1 == τ2 → τ1 ground → (d ⟨ τ1 ⇒ ⦇-⦈ ⇒ τ2 ⟩) →> d
-            ITCastSucceed' eq gnd rewrite eq = ITCastSucceed gnd 
             step1 = (Step (FHCast FHOuter) (ITGround g1') (FHCast FHOuter))
             step2 = (Step FHOuter (ITExpand g2') FHOuter)
             step3 = (Step (FHCast FHOuter) (ITCastSucceed' eq (ground-match g1')) (FHCast FHOuter))

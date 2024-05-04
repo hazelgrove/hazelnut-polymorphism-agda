@@ -50,15 +50,20 @@ module parametricity2-lemmas2 where
     ∅ ⊢ d2 :: τ2 →
     d1 =0c d2 →
     d1 ↦ d1' →
-    d1' =0c d2 + Σ[ d2' ∈ ihexp ] (d2 ↦* d2' × (d1' =0c d2' + d2' indet))
+    Σ[ d2' ∈ ihexp ] (d2 ↦* d2' × (d1' =0c d2' + d2' indet))
   parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin step ctxout) with eq0-ctxinc eq0 ctxin
 
   -- See note above -- all of these preserve =0c
-  parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin ITCastID ctxout) | d2in , ε2 , ctxin' , Eq0CastL eq0in , eq0e , form = Inl (eq0c-ctx ctxin ctxout (Eq0CastL eq0c-refl) eq0)
-  parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin (ITCastSucceed x) ctxout) | d2in , ε2 , ctxin' , Eq0CastL eq0in , eq0e , form = Inl (eq0c-ctx ctxin ctxout (Eq0CastL (Eq0CastL eq0c-refl)) eq0)
-  parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin (ITCastFail x x₁ x₂) ctxout) | d2in , ε2 , ctxin' , Eq0CastL eq0in , eq0e , form = Inl (eq0c-ctx ctxin ctxout (Eq0CastL (Eq0CastL (eq0cr-lemma' eq0c-refl))) eq0)
-  parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin (ITGround x) ctxout) | d2in , ε2 , ctxin' , Eq0CastL eq0in , eq0e , form = Inl (eq0c-ctx ctxin ctxout (Eq0CastL (eq0cr-lemma (eq0cr-lemma eq0c-refl))) eq0)
-  parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin (ITExpand x) ctxout) | d2in , ε2 , ctxin' , Eq0CastL eq0in , eq0e , form = Inl (eq0c-ctx ctxin ctxout (Eq0CastL (eq0cr-lemma (eq0cr-lemma eq0c-refl))) eq0)
+  parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin ITCastID ctxout) | d2in , ε2 , ctxin' , Eq0CastL eq0in , eq0e , form = _ , MSRefl , Inl (eq0c-ctx ctxin ctxout (Eq0CastL eq0c-refl) eq0)
+  parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin (ITCastSucceed x) ctxout) | d2in , ε2 , ctxin' , Eq0CastL eq0in , eq0e , form = _ , MSRefl , Inl (eq0c-ctx ctxin ctxout (Eq0CastL (Eq0CastL eq0c-refl)) eq0)
+  parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin (ITCastFail x x₁ x₂) ctxout) | d2in , ε2 , ctxin' , Eq0CastL eq0in , eq0e , form = _ , MSRefl , Inl (eq0c-ctx ctxin ctxout (Eq0CastL (Eq0CastL (eq0cr-lemma' eq0c-refl))) eq0)
+  parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin (ITGround x) ctxout) | d2in , ε2 , ctxin' , Eq0CastL eq0in , eq0e , form = _ , MSRefl , Inl (eq0c-ctx ctxin ctxout (Eq0CastL (eq0cr-lemma (eq0cr-lemma eq0c-refl))) eq0)
+  parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin (ITExpand x) ctxout) | d2in , ε2 , ctxin' , Eq0CastL eq0in , eq0e , form = _ , MSRefl , Inl (eq0c-ctx ctxin ctxout (Eq0CastL (eq0cr-lemma (eq0cr-lemma eq0c-refl))) eq0)
+  parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin ITApCast ctxout) 
+    | .(_ ∘ _) , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0Ap x x₁)) , eq0e , form = 
+      _ , MSRefl , Inl (eq0c-ctx ctxin ctxout (Eq0NoLeft (Eq0CastR (Eq0NoCasts (Eq0Ap (Eq0CastL eq0c-refl) (eq0cr-lemma eq0c-refl))))) eq0) -- Using ITApCast doesn't change =0 status
+  parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin ITTApCast ctxout) | .(_ < _ >) , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0TAp x)) , eq0e = -- Using ITTApCast doesn't either
+    _ , MSRefl , Inl (eq0c-ctx ctxin ctxout (Eq0NoLeft (Eq0CastR (Eq0NoCasts (Eq0TAp (Eq0CastL eq0c-refl))))) eq0)
 
   -- Pick a better context. Add as a conclusion to eq0-ctxinc that the ctx we select absorbs all casts from the term.
   parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin step ctxout) | .(_ ⟨ _ ⇒ _ ⟩) , ε2 , ctxin' , Eq0NoLeft (Eq0CastR x) , eq0e , form
@@ -83,7 +88,7 @@ module parametricity2-lemmas2 where
     | _ , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0NoLeft (Eq0CastR (Eq0NoCasts ()))) x₁)) , eq0e , form | _ , TAAp (TACast {d = .(_ ∘ _)} {τ2 = .(_ ==> _)} (TAAp wt2' wt2c) x₃ ConsistHole2) wt2''
   parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin ITLam ctxout)
     | _ , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0NoLeft (Eq0CastR (Eq0NoCasts ()))) x₁)) , eq0e , form | _ , TAAp (TACast {d = .(_ < _ >)} {τ2 = .(_ ==> _)} (TATAp x₄ wt2' x₆) x₃ ConsistHole2) wt2''
-  ... | _ , TAAp (TACast {d = .(_ ⟨ _ ⇒⦇-⦈⇏ _ ⟩)} {τ2 = .(_ ==> _)} (TAFailedCast wt2' x₄ x₆ x₇) x₃ ConsistHole2) wt2'' = {!   !} -- lemma for indet
+  ... | _ , TAAp (TACast {d = .(_ ⟨ _ ⇒⦇-⦈⇏ _ ⟩)} {τ2 = .(_ ==> _)} (TAFailedCast wt2' x₄ x₆ x₇) x₃ ConsistHole2) wt2'' = {!   !}
   -- TODO: Panic at the above. It's the case we can't show.
   -- Consider, evaluation of the argument diverges. We can get a terminating execution by substituting it in (which can throw it away). But
   -- By having a failed cast we force evaluation of the argument, which can be non-terminating (think Ω).
@@ -92,29 +97,74 @@ module parametricity2-lemmas2 where
   -- But then, we get that d2 is indet, exactly what we want to show.
   ... | _ , TAAp {d2 = d22} (TACast {d = d21} {τ1 = τ1 ==> τ2} {τ2 = (τ3 ==> τ4)} wt2' x₃ (ConsistArr x₄ x₆)) wt2'' with evalctx-out (((d21 ∘ (d22 ⟨ τ3 ⇒ τ1 ⟩)) ⟨ τ2 ⇒ τ4 ⟩)) ctxin'
   ...   | _ , ctxout' with parametricity21-lemma-ctx wt1 (preservation wt2 (Step ctxin' ITApCast ctxout')) (eq0c-sym (eq0c-ctx ctxin' ctxout' (Eq0NoLeft (Eq0CastR (Eq0NoCasts (Eq0Ap (Eq0CastL eq0c-refl) (eq0cr-lemma eq0c-refl))))) (eq0c-sym eq0))) ((Step ctxin ITLam ctxout))
-  ...     | Inl res = Inr (_ , MSStep (Step ctxin' ITApCast ctxout') MSRefl , Inl res)
-  ...     | Inr (d2' , steps' , eq0final) = Inr (d2' , MSStep (Step ctxin' ITApCast ctxout') steps' , eq0final)
+  ...     | d2' , steps' , eq0final = d2' , MSStep (Step ctxin' ITApCast ctxout') steps' , eq0final
   parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin ITLam ctxout) 
-    | _ , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0NoLeft (Eq0CastR x)) x₁)) , eq0e , form | _ , TAAp {d2 = d4} (TACast {d = (d3 ⟨ τ1 ⇒ ⦇-⦈ ⟩)} {τ2 = (τ2 ==> τ3)} (TACast wt2' x₄ x₆) x₃ ConsistHole2) wt2'' with ground-dec τ1 | ground-dec (τ2 ==> τ3) | ~dec τ1 (τ2 ==> τ3)
-  ... | Inl gndl | Inl gndr | Inl consis with evalctx-out (d3 ∘ d4) ctxin'
-  ...   | _ , ctxout' rewrite gnd-gnd-consis-eq gndl gndr consis with parametricity21-lemma-ctx wt1 (preservation wt2 (Step (evalctx-compose ctxin' (FHAp1 FHOuter)) (ITCastSucceed gndr) (evalctx-compose ctxout' (FHAp1 FHOuter)))) ((eq0c-sym (eq0c-ctx ctxin' ctxout' (Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0CastL (Eq0CastL eq0c-refl)) eq0c-refl))) (eq0c-sym eq0)))) (Step ctxin ITLam ctxout)
-  ...       | Inl res = Inr (_ , MSStep (Step (evalctx-compose ctxin' (FHAp1 FHOuter)) (ITCastSucceed gndr) (evalctx-compose ctxout' (FHAp1 FHOuter))) MSRefl , Inl res)
-  ...       | Inr (d2' , steps' , eq0final) = Inr (d2' , MSStep (Step (evalctx-compose ctxin' (FHAp1 FHOuter)) (ITCastSucceed gndr) (evalctx-compose ctxout' (FHAp1 FHOuter))) steps' , eq0final)
+    | _ , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0NoLeft (Eq0CastR x)) x₁)) , eq0e , form | _ , TAAp {d2 = d4} (TACast {d = (d3 ⟨ τ1 ⇒ ⦇-⦈ ⟩)} {τ2 = (τ2 ==> τ3)} (TACast wt2' x₄ x₆) x₃ ConsistHole2) wt2'' with ground-dec τ1 | ground-dec (τ2 ==> τ3)
+  ... | Inl gndl | Inl gndr with ~dec τ1 (τ2 ==> τ3)
+  ...   | Inl consis with evalctx-out (d3 ∘ d4) ctxin'
+  ...     | _ , ctxout' rewrite gnd-gnd-consis-eq gndl gndr consis with parametricity21-lemma-ctx wt1 (preservation wt2 (Step (evalctx-compose ctxin' (FHAp1 FHOuter)) (ITCastSucceed gndr) (evalctx-compose ctxout' (FHAp1 FHOuter)))) ((eq0c-sym (eq0c-ctx ctxin' ctxout' (Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0CastL (Eq0CastL eq0c-refl)) eq0c-refl))) (eq0c-sym eq0)))) (Step ctxin ITLam ctxout)
+  ...       | d2' , steps' , eq0final = d2' , MSStep (Step (evalctx-compose ctxin' (FHAp1 FHOuter)) (ITCastSucceed gndr) (evalctx-compose ctxout' (FHAp1 FHOuter))) steps' , eq0final
   parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin ITLam ctxout) 
     | _ , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0NoLeft (Eq0CastR x)) x₁)) , eq0e , form | _ , TAAp {d2 = d4} (TACast {d = (d3 ⟨ τ1 ⇒ ⦇-⦈ ⟩)} {τ2 = (τ2 ==> τ3)} (TACast wt2' x₄ x₆) x₃ ConsistHole2) wt2''
     | Inl gndl | Inl gndr | Inr consis with evalctx-out ((d3 ⟨ τ1 ⇒⦇-⦈⇏ (τ2 ==> τ3) ⟩) ∘ d4) ctxin'
   ... | _ , ctxout' with parametricity21-lemma-ctx wt1 (preservation wt2 (Step (evalctx-compose ctxin' (FHAp1 FHOuter)) (ITCastFail gndl gndr consis) (evalctx-compose ctxout' (FHAp1 FHOuter)))) ((eq0c-sym (eq0c-ctx ctxin' ctxout' (Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0CastL (Eq0CastL (eq0cr-lemma' eq0c-refl))) eq0c-refl))) (eq0c-sym eq0)))) (Step ctxin ITLam ctxout)
-  ...       | Inl res = Inr (_ , MSStep (Step (evalctx-compose ctxin' (FHAp1 FHOuter)) (ITCastFail gndl gndr consis) (evalctx-compose ctxout' (FHAp1 FHOuter))) MSRefl , Inl res)
-  ...       | Inr (d2' , steps' , eq0final) = Inr (d2' , MSStep (Step (evalctx-compose ctxin' (FHAp1 FHOuter)) (ITCastFail gndl gndr consis) (evalctx-compose ctxout' (FHAp1 FHOuter))) steps' , eq0final)
+  ...       | d2' , steps' , eq0final = d2' , MSStep (Step (evalctx-compose ctxin' (FHAp1 FHOuter)) (ITCastFail gndl gndr consis) (evalctx-compose ctxout' (FHAp1 FHOuter))) steps' , eq0final
   parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin ITLam ctxout) 
     | _ , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0NoLeft (Eq0CastR x)) x₁)) , eq0e , form | _ , TAAp {d2 = d4} (TACast {d = (d3 ⟨ τ1 ⇒ ⦇-⦈ ⟩)} {τ2 = (τ2 ==> τ3)} (TACast wt2' x₄ x₆) x₃ ConsistHole2) wt2''
-    | Inl gndl | Inr gndr | _ = {!   !}
+    | Inl gndl | Inr gndr with ground-match-exists gndr x₃ (λ ()) 
+  ... | τ2' ==> τ3' , gndr' with evalctx-out (((d3 ⟨ τ1 ⇒ ⦇-⦈ ⟩) ⟨ ⦇-⦈ ⇒ τ2' ==> τ3' ⇒ τ2 ==> τ3 ⟩) ∘ d4) ctxin'
+  ...   | _ , ctxout' with ~dec τ1 (τ2' ==> τ3')
+  ...     | Inl (ConsistArr c1 c2) with evalctx-out ((d3 ⟨ τ2' ==> τ3' ⇒ τ2 ==> τ3 ⟩) ∘ d4) ctxout'
+  ...       | _ , ctxout'' with parametricity21-lemma-ctx wt1 
+            (preservation (preservation wt2 ((Step (evalctx-compose ctxin' (FHAp1 FHOuter)) (ITExpand gndr') ((evalctx-compose ctxout' (FHAp1 FHOuter)))))) 
+              ((Step (evalctx-compose ctxout' (FHAp1 (FHCast FHOuter))) (ITCastSucceed' (gnd-gnd-consis-eq gndl (ground-match gndr') (ConsistArr c1 c2)) gndl) (evalctx-compose ctxout'' (FHAp1 (FHCast FHOuter))))))
+              (eq0c-sym (eq0c-ctx ctxin' ctxout'' (Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0CastL (Eq0CastL (eq0cr-lemma eq0c-refl))) eq0c-refl))) (eq0c-sym eq0))) (Step ctxin ITLam ctxout)
+  ...       | d2' , steps' , eq0final = d2' , 
+               MSStep (Step (evalctx-compose ctxin' (FHAp1 FHOuter)) (ITExpand gndr') ((evalctx-compose ctxout' (FHAp1 FHOuter))))
+              (MSStep (Step (evalctx-compose ctxout' (FHAp1 (FHCast FHOuter))) (ITCastSucceed' (gnd-gnd-consis-eq gndl (ground-match gndr') (ConsistArr c1 c2)) gndl) (evalctx-compose ctxout'' (FHAp1 (FHCast FHOuter)))) steps') , eq0final
   parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin ITLam ctxout) 
     | _ , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0NoLeft (Eq0CastR x)) x₁)) , eq0e , form | _ , TAAp {d2 = d4} (TACast {d = (d3 ⟨ τ1 ⇒ ⦇-⦈ ⟩)} {τ2 = (τ2 ==> τ3)} (TACast wt2' x₄ x₆) x₃ ConsistHole2) wt2''
-    | Inr gndl | Inl gndr | _ = {!   !}
+    | Inl gndl | Inr gndr | τ2' ==> τ3' , gndr' | _ , ctxout' | Inr consis with evalctx-out (((d3 ⟨ τ1  ⇒⦇-⦈⇏ τ2' ==> τ3' ⟩) ⟨ τ2' ==> τ3' ⇒ τ2 ==> τ3 ⟩) ∘ d4) ctxout'
+  ... | _ , ctxout'' with parametricity21-lemma-ctx wt1 (preservation (preservation wt2 ((Step (evalctx-compose ctxin' (FHAp1 FHOuter)) (ITExpand gndr') ((evalctx-compose ctxout' (FHAp1 FHOuter))))))
+        ((Step (evalctx-compose ctxout' (FHAp1 (FHCast FHOuter))) (ITCastFail gndl (ground-match gndr') consis)  (evalctx-compose ctxout'' (FHAp1 (FHCast FHOuter))))))
+        (eq0c-sym (eq0c-ctx ctxin' ctxout'' (Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0CastL (Eq0CastL (eq0cr-lemma (eq0cr-lemma' eq0c-refl)))) eq0c-refl))) (eq0c-sym eq0))) (Step ctxin ITLam ctxout)
+  ...       | d2' , steps' , eq0final = d2' ,
+              MSStep (Step (evalctx-compose ctxin' (FHAp1 FHOuter)) (ITExpand gndr') ((evalctx-compose ctxout' (FHAp1 FHOuter))))
+              (MSStep (Step (evalctx-compose ctxout' (FHAp1 (FHCast FHOuter))) (ITCastFail gndl (ground-match gndr') consis)  (evalctx-compose ctxout'' (FHAp1 (FHCast FHOuter)))) steps') , eq0final
+  parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin ITLam ctxout)
+    | _ , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0NoLeft (Eq0CastR x)) x₁)) , eq0e , form | _ , TAAp {d2 = d4} (TACast {d = (d3 ⟨ τ1 ⇒ ⦇-⦈ ⟩)} {τ2 = (τ2 ==> τ3)} (TACast wt2' x₄ x₆) x₃ ConsistHole2) wt2''
+    | Inr gndl | Inl gndr with htyp-eq-dec τ1 ⦇-⦈
+  ... | Inl refl with evalctx-out ((d3 ⟨ ⦇-⦈ ⇒ τ2 ==> τ3 ⟩) ∘ d4) ctxin'
+  ...   | _ , ctxout' with parametricity21-lemma-ctx wt1 (preservation wt2 ((Step (evalctx-compose ctxin' (FHAp1 (FHCast (FHOuter)))) ITCastID (evalctx-compose ctxout' (FHAp1 (FHCast (FHOuter)))))))
+            (eq0c-sym (eq0c-ctx ctxin' ctxout' (Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0CastL (Eq0CastL (eq0cr-lemma eq0c-refl))) eq0c-refl))) (eq0c-sym eq0))) (Step ctxin ITLam ctxout)
+  ...     | d2' , steps' , eq0final = d2' , MSStep (Step (evalctx-compose ctxin' (FHAp1 (FHCast (FHOuter)))) ITCastID (evalctx-compose ctxout' (FHAp1 (FHCast (FHOuter))))) steps' , eq0final
+  parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin ITLam ctxout)
+    | _ , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0NoLeft (Eq0CastR x)) x₁)) , eq0e , form | _ , TAAp {d2 = d4} (TACast {d = (d3 ⟨ τ1 ⇒ ⦇-⦈ ⟩)} {τ2 = (τ2 ==> τ3)} (TACast wt2' x₄ x₆) x₃ ConsistHole2) wt2''
+    | Inr gndl | Inl gndr | Inr neq with ground-match-exists gndl (wf-ta CtxWFEmpty wt2') neq
+  ... | τ1' , gndl' with evalctx-out ((((d3 ⟨ τ1 ⇒ τ1' ⟩) ⟨ τ1' ⇒ ⦇-⦈ ⟩) ⟨ ⦇-⦈ ⇒ τ2 ==> τ3 ⟩) ∘ d4) ctxin'
+  ...   | _ , ctxout' with ~dec τ1' (τ2 ==> τ3)
+  ...     | Inl consis with evalctx-out ((d3 ⟨ τ1 ⇒ τ1' ⟩) ∘ d4) ctxout'
+  ...       | _ , ctxout'' with parametricity21-lemma-ctx wt1 (preservation (preservation wt2 
+                ((Step ((evalctx-compose ctxin' (FHAp1 (FHCast (FHOuter))))) (ITGround gndl') ((evalctx-compose ctxout' (FHAp1 (FHCast (FHOuter))))))))
+                ((Step (evalctx-compose ctxout' (FHAp1 FHOuter)) (ITCastSucceed' (gnd-gnd-consis-eq (ground-match gndl') gndr consis) (ground-match gndl')) (evalctx-compose ctxout'' (FHAp1 FHOuter)))))
+                (eq0c-sym (eq0c-ctx ctxin' ctxout'' (Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0CastL (Eq0CastL (eq0cr-lemma eq0c-refl))) eq0c-refl))) (eq0c-sym eq0))) (Step ctxin ITLam ctxout)
+  ...         | d2' , steps' , eq0final = d2' ,
+                MSStep (Step ((evalctx-compose ctxin' (FHAp1 (FHCast (FHOuter))))) (ITGround gndl') ((evalctx-compose ctxout' (FHAp1 (FHCast (FHOuter))))))
+                (MSStep (Step (evalctx-compose ctxout' (FHAp1 FHOuter)) (ITCastSucceed' (gnd-gnd-consis-eq (ground-match gndl') gndr consis) (ground-match gndl')) (evalctx-compose ctxout'' (FHAp1 FHOuter))) steps') , eq0final
+  parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin ITLam ctxout)
+    | _ , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0NoLeft (Eq0CastR x)) x₁)) , eq0e , form | _ , TAAp {d2 = d4} (TACast {d = (d3 ⟨ τ1 ⇒ ⦇-⦈ ⟩)} {τ2 = (τ2 ==> τ3)} (TACast wt2' x₄ x₆) x₃ ConsistHole2) wt2''
+    | Inr gndl | Inl gndr | Inr neq | τ1' , gndl' | _ , ctxout' | Inr consis with evalctx-out (((d3 ⟨ τ1 ⇒ τ1' ⟩) ⟨ τ1' ⇒⦇-⦈⇏ τ2 ==> τ3 ⟩) ∘ d4) ctxin'
+  ...  | _ , ctxout'' with parametricity21-lemma-ctx wt1 (preservation (preservation wt2 
+            (Step ((evalctx-compose ctxin' (FHAp1 (FHCast (FHOuter))))) (ITGround gndl') ((evalctx-compose ctxout' (FHAp1 (FHCast (FHOuter)))))))
+            (Step (evalctx-compose ctxout' (FHAp1 FHOuter)) (ITCastFail (ground-match gndl') gndr consis) (evalctx-compose ctxout'' (FHAp1 FHOuter)))) 
+            (eq0c-sym (eq0c-ctx ctxin' ctxout'' (Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0CastL (Eq0CastL (eq0cr-lemma' (eq0cr-lemma eq0c-refl)))) eq0c-refl))) (eq0c-sym eq0))) (Step ctxin ITLam ctxout)
+  ...     | d2' , steps' , eq0final = d2' ,
+                MSStep (Step ((evalctx-compose ctxin' (FHAp1 (FHCast (FHOuter))))) (ITGround gndl') ((evalctx-compose ctxout' (FHAp1 (FHCast (FHOuter))))))
+                (MSStep (Step (evalctx-compose ctxout' (FHAp1 FHOuter)) (ITCastFail (ground-match gndl') gndr consis) (evalctx-compose ctxout'' (FHAp1 FHOuter))) steps') ,
+                eq0final
   parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin ITLam ctxout) 
     | _ , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0NoLeft (Eq0CastR x)) x₁)) , eq0e , form | _ , TAAp {d2 = d4} (TACast {d = (d3 ⟨ τ1 ⇒ ⦇-⦈ ⟩)} {τ2 = (τ2 ==> τ3)} (TACast wt2' x₄ x₆) x₃ ConsistHole2) wt2''
-    | Inr gndl | Inr gndr | _ = {!   !}
+    | Inr gndl | Inr gndr = {!   !}
 
 {-
   ~dec τ1 (τ2 ==> τ3) 
@@ -132,14 +182,12 @@ module parametricity2-lemmas2 where
       -- lemma -- if d1 o d2 -> final then d2 -> final, then use the fact that d2 =0c d4
       -- and parametricity to show d4 -> final, but d4 has failed cast that never goes away so it's indet
       -- Alternatively, if just showing parametricity22, we have d4 -> final and d4 has a failedcast
-  parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin ITApCast ctxout) 
-    | .(_ ∘ _) , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0Ap x x₁)) , eq0e , form = 
-      Inl (eq0c-ctx ctxin ctxout (Eq0NoLeft (Eq0CastR (Eq0NoCasts (Eq0Ap (Eq0CastL eq0c-refl) (eq0cr-lemma eq0c-refl))))) eq0) -- Using ITApCast doesn't change =0 status
 
 -- These are the actual interesting cases.
   parametricity21-lemma-ctx {d1 = d1} {d2 = d2} wt1 wt2 eq0 (Step ctxin (ITLam {d1 = d3} {d2 = d4}) ctxout) 
     | ((·λ[ _ ] _) ∘ _) , ε2 , ctxin' , 
     Eq0NoLeft (Eq0NoCasts (Eq0Ap {d4 = d6} (Eq0NoLeft (Eq0NoCasts (Eq0Lam {d2 = d5} x))) x₁)) , eq0e , form with eq0c-ctxout (eq0-substc d3 d5 x₁ x) eq0e ctxout
-  ... | (d2out , eqeout , eq0out) = Inr (_ , MSStep (Step ctxin' ITLam eqeout) MSRefl , Inl eq0out)
-  parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin step ctxout) | .(_ < _ >) , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0TAp x)) , eq0e = {!   !}
+  ... | (d2out , eqeout , eq0out) = _ , MSStep (Step ctxin' ITLam eqeout) MSRefl , Inl eq0out
+  parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin ITTLam ctxout) | .(_ < _ >) , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0TAp x)) , eq0e = {!   !}
+ 
  

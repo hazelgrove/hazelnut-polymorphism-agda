@@ -32,8 +32,7 @@ module parametricity2 where
   ... | d2' , eq0' , steps , FBoxedVal x = d2' , steps , Inl (x , eq0')
   ... | d2' , eq0' , steps , FIndet x = d2' , steps , Inr x
   parametricity21 wt1 wt2 eq0 (MSStep x step) bv with parametricity21-lemma-ctx wt1 wt2 eq0 x
-  ... | Inl next  = parametricity21 (preservation wt1 x) wt2 next step bv
-  ... | Inr (d2' , steps , Inr x₁) = d2' , steps , Inr x₁
-  ... | Inr (d2' , steps , Inl x₁) with parametricity21 (preservation wt1 x) (preservation-trans wt2 steps) x₁ step bv
+  ... | d2' , steps , Inr x₁ = d2' , steps , Inr x₁
+  ... | d2' , steps , Inl x₁ with parametricity21 (preservation wt1 x) (preservation-trans wt2 steps) x₁ step bv
   ...   | v2 , steps' , next = v2 , mstrans steps steps' , next
           

@@ -456,3 +456,6 @@ module parametricity2-defs where
      (d ⟨ τ ⇒ ⦇-⦈ ⟩) final → d final
   fin-gndhole-lemma' (FBoxedVal (BVHoleCast x x₁)) = FBoxedVal x₁
   fin-gndhole-lemma' (FIndet (ICastGroundHole x x₁)) = FIndet x₁
+
+  ITCastSucceed' : ∀{d τ1 τ2} → τ1 == τ2 → τ1 ground → (d ⟨ τ1 ⇒ ⦇-⦈ ⇒ τ2 ⟩) →> d
+  ITCastSucceed' eq gnd rewrite eq = ITCastSucceed gnd 
