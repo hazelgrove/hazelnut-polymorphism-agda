@@ -113,6 +113,7 @@ module parametricity2-lemmas2 where
   parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin ITLam ctxout) 
     | _ , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0Ap (Eq0NoLeft (Eq0CastR x)) x₁)) , eq0e | _ , TAAp {d2 = d4} (TACast {d = (d3 ⟨ τ1 ⇒ ⦇-⦈ ⟩)} {τ2 = (τ2 ==> τ3)} (TACast wt2' x₄ x₆) x₃ ConsistHole2) wt2''
     | Inr gndl | Inr gndr | _ = {!   !}
+
 {-
   ~dec τ1 (τ2 ==> τ3) 
   ... | Inl consis = {!   !}
