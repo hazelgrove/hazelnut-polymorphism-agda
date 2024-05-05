@@ -44,7 +44,7 @@ module typed-elaboration where
       let wf' = wf-⊓ meet (wf-syn ctxwf syn) (WFForall WFHole) in 
       TATAp wf (TACast (typed-elaboration-ana ctxwf wf' ana) wf' (consist-ana ctxwf wf' ana)) refl
     typed-elaboration-syn ctxwf ESEHole = TAEHole
-    typed-elaboration-syn ctxwf (ESNEHole syn) = TANEHole (typed-elaboration-syn ctxwf syn)
+    typed-elaboration-syn ctxwf (ESNEHole ana) = TANEHole (typed-elaboration-ana ctxwf WFHole ana)
     typed-elaboration-syn ctxwf (ESAsc wf ana) = TACast (typed-elaboration-ana ctxwf wf ana) wf (consist-ana ctxwf wf ana)
 
     typed-elaboration-ana : ∀{Γ e τ τ' d} →

@@ -37,5 +37,3 @@ open import complete-progress
 
 open import parametricity
 open import graduality
-
-module all where

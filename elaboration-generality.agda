@@ -19,7 +19,7 @@ module elaboration-generality where
     elaboration-generality-synth (ESAp x x₁ x₂ ana) = SAp x x₁ (elaboration-generality-ana ana)
     elaboration-generality-synth (ESTAp x x₁ x₂ x₃ x₄) = STAp x x₁ x₂ x₄
     elaboration-generality-synth ESEHole = SEHole
-    elaboration-generality-synth (ESNEHole syn) = SNEHole (elaboration-generality-synth syn)
+    elaboration-generality-synth (ESNEHole ana) = SNEHole (elaboration-generality-ana ana)
     elaboration-generality-synth (ESAsc x ana) = SAsc x (elaboration-generality-ana ana)
 
     elaboration-generality-ana : ∀{Γ e τ τ' d} →

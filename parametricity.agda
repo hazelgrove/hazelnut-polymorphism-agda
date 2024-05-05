@@ -198,7 +198,7 @@ module parametricity where
     eq0-elab-syn Eq0EHole ESEHole ESEHole = Eq0EHole
     eq0-elab-syn (Eq0Lam eq0) (ESLam x elab1) (ESLam x₂ elab2) = Eq0Lam (eq0-elab-syn eq0 elab1 elab2)
     eq0-elab-syn (Eq0TLam eq0) (ESTLam elab1) (ESTLam elab2) = Eq0TLam (eq0-elab-syn eq0 elab1 elab2)
-    eq0-elab-syn (Eq0NEHole eq0) (ESNEHole elab1) (ESNEHole elab2) = Eq0NEHole (eq0-elab-syn eq0 elab1 elab2)
+    eq0-elab-syn (Eq0NEHole eq0) (ESNEHole elab1) (ESNEHole elab2) = Eq0NEHole (eq0-elab-ana eq0 elab1 elab2)
     eq0-elab-syn (Eq0Ap eq0 eq1) (ESAp x x₁ x₂ x₄) (ESAp x₆ x₇ x₈ x₁₀) = Eq0Ap (Eq0Cast (eq0-elab-ana eq0 x₂ x₈)) (Eq0Cast (eq0-elab-ana eq1 x₄ x₁₀))
     eq0-elab-syn (Eq0TAp eq0) (ESTAp x x₁ x₂ x₃ x₄) (ESTAp x₅ x₆ x₇ x₈ x₉) = Eq0TAp (Eq0Cast (eq0-elab-ana eq0 x₃ x₈))
 

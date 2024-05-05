@@ -27,7 +27,7 @@ module elaboration-unicity where
     ... | refl with elaboration-unicity-ana x₃ x₈ 
     ... | refl , refl = refl , refl
     elaboration-unicity-synth ESEHole ESEHole = refl , refl
-    elaboration-unicity-synth (ESNEHole syn1) (ESNEHole syn2) with elaboration-unicity-synth syn1 syn2 
+    elaboration-unicity-synth (ESNEHole ana1) (ESNEHole ana2) with elaboration-unicity-ana ana1 ana2 
     ... | refl , refl = refl , refl
     elaboration-unicity-synth (ESAsc x x₁) (ESAsc x₂ x₃) with elaboration-unicity-ana x₁ x₃  
     ... | refl , refl = refl , refl

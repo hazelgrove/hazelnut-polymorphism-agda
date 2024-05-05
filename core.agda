@@ -32,8 +32,8 @@ module core where
         Γ ⊢ (e1 ∘ e2) => τ
       SEHole  : {Γ : ctx} → 
         Γ ⊢ ⦇-⦈ => ⦇-⦈
-      SNEHole : {Γ : ctx} {e : hexp} {τ : htyp} →
-        Γ ⊢ e => τ →
+      SNEHole : {Γ : ctx} {e : hexp} →
+        Γ ⊢ e <= ⦇-⦈ →
         Γ ⊢ ⦇⌜ e ⌟⦈ => ⦇-⦈
       SLam : {Γ : ctx} {e : hexp} {τ1 τ2 : htyp} →
         Γ ⊢ τ1 wf →
@@ -96,7 +96,7 @@ module core where
       ESEHole : ∀{Γ} →
         Γ ⊢ ⦇-⦈ ⇒ ⦇-⦈ ~> ⦇-⦈
       ESNEHole : ∀{Γ e τ d} →
-        Γ ⊢ e ⇒ τ ~> d →
+        Γ ⊢ e ⇐ ⦇-⦈ ~> d :: τ →
         Γ ⊢ ⦇⌜ e ⌟⦈ ⇒ ⦇-⦈ ~> ⦇⌜ d ⌟⦈
       ESAsc : ∀ {Γ e τ d τ'} →
         Γ ⊢ τ wf →

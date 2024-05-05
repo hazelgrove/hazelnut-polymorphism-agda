@@ -20,8 +20,8 @@ module elaborability where
     elaborability-synth (SAp syn x ana) with elaborability-synth syn | elaborability-ana (ASubsume syn (⊑t-consist (π1 (⊓-lb x)))) | elaborability-ana ana
     ... | d1 , syn' | d2 , τ1 , ana1 | d3 , τ2 , ana2 = ((d2 ⟨ τ1 ⇒ _ ⟩) ∘ (d3 ⟨ _ ⇒ _ ⟩)) , (ESAp syn x ana1 ana2)
     elaborability-synth SEHole = ⦇-⦈ , ESEHole
-    elaborability-synth (SNEHole syn) with elaborability-synth syn 
-    ... | d , elab = ⦇⌜ d ⌟⦈ , ESNEHole elab
+    elaborability-synth (SNEHole ana) with elaborability-ana ana 
+    ... | d , τ , elab = ⦇⌜ d ⌟⦈ , ESNEHole elab
     elaborability-synth (SLam x syn) with elaborability-synth syn 
     ... | d , elab = (·λ[ _ ] d) , ESLam x elab
     elaborability-synth (STLam syn) with elaborability-synth syn 

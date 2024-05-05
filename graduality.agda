@@ -48,8 +48,8 @@ module graduality where
     ... | τ' , syn' , prect' = _ , SLam (wf-⊑t wf precc prect) syn' , PTArr prect prect'
     graduality-syn precc (PTLam prec) (STLam syn) with graduality-syn (PCTVar precc) prec syn 
     ... | τ' , syn' , prect' = _ , STLam syn' , PTForall prect'
-    graduality-syn precc (PNEHole prec) (SNEHole syn) with graduality-syn precc prec syn 
-    ... | τ' , syn' , prect' = _ , SNEHole syn' , PTHole
+    graduality-syn precc (PNEHole prec) (SNEHole ana) 
+      =  _ , SNEHole (graduality-ana precc PTHole prec ana) , PTHole
     graduality-syn precc (PAp prec1 prec2) (SAp syn meet ana) with graduality-syn precc prec1 syn
     ... | τ' , wt' , prect with ⊑t-⊓ prect (⊑t-refl _) meet 
     ... | .(_ ==> _) , meet' , PTArr prect' prect'' = _ ,  SAp wt' meet' (graduality-ana precc prect' prec2 ana) , prect''
