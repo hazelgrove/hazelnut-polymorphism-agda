@@ -30,7 +30,9 @@ The proof of Theorem 2 can be found in:
 
 The proof of Theorem 3 and Corollary 1 can be found in:
 
-- [this isn't here yet](parametricity.agda)
+- [parametricity2.agda](parametricity.agda)
+  - Lemma 1: [parametricity2-lemmas1.agda](parametricity2-lemmas1.agda)
+  - Lemma 2: [parametricity2-lemmas2.agda](parametricity2-lemmas2.agda)
 
 The proof of Theorem 4 (the Static Gradual Guarantee) can be found in:
 
