@@ -13,6 +13,7 @@ open import lemmas-consistency
 open import lemmas-wf
 open import eq-dec
 open import lemmas-ground
+open import finality
 
 module parametricity2-defs where
     
@@ -459,3 +460,18 @@ module parametricity2-defs where
 
   ITCastSucceed' : ∀{d τ1 τ2} → τ1 == τ2 → τ1 ground → (d ⟨ τ1 ⇒ ⦇-⦈ ⇒ τ2 ⟩) →> d
   ITCastSucceed' eq gnd rewrite eq = ITCastSucceed gnd 
+
+  confluence : Set
+  confluence = (d dm1 dm2 : ihexp) → d ↦* dm1 → d ↦* dm2 → Σ[ df ∈ ihexp ](dm1 ↦* df × dm2 ↦* df)
+
+  confluence-implies-unique-normal-form : ∀{d d1 d2} →
+    confluence →
+    d ↦* d1 →
+    d ↦* d2 →
+    d1 final →
+    d2 final →
+    d1 == d2
+  confluence-implies-unique-normal-form {d} {d1} {d2} conf steps1 steps2 final1 final2
+    with conf d d1 d2 steps1 steps2
+  ... | df , steps1' , step2' rewrite finality* final1 steps1' rewrite finality* final2 step2' = refl
+ 
