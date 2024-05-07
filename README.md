@@ -28,7 +28,7 @@ The proof of Theorem 2 can be found in:
 
 - [parametricity.agda](parametricity.agda)
 
-The proof of Theorem 3 and Corollary 1 can be found in:
+The proof of Theorem 3 and Corollary 2 can be found in:
 
 - [parametricity2.agda](parametricity.agda)
   - Lemma 1: [parametricity2-lemmas1.agda](parametricity2-lemmas1.agda)
