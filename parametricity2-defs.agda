@@ -302,26 +302,86 @@ module parametricity2-defs where
   cast-steps-preserve-=0c (ITGround x) eq0 = Eq0CastL (Eq0CastL eq0)
   cast-steps-preserve-=0c (ITExpand x) eq0 = Eq0CastL (Eq0CastL eq0)
 
-  eq0-substc : 
-    ∀ {d1 d2} →
-    (d3 d4 : ihexp) →
-    d1 =0c d2 →
-    d3 =0c d4 →
-    (ttSub Z Z d1 d3) =0c (ttSub Z Z d2 d4)
-  eq0-substc {d1} {d2} .(_ ⟨ _ ⇒ _ ⟩) d4 eq0 (Eq0CastL eq0') = Eq0CastL (eq0-substc _ _ eq0 eq0')
-  eq0-substc {d1} {d2} .(_ ⟨ _ ⇒⦇-⦈⇏ _ ⟩) d4 eq0 (Eq0FailedCastL eq0') = Eq0FailedCastL (eq0-substc _ _ eq0 eq0')
-  eq0-substc d3 .(_ ⟨ _ ⇒ _ ⟩) eq0 (Eq0NoLeft (Eq0CastR x)) = {!   !}
-  eq0-substc d3 .(_ ⟨ _ ⇒⦇-⦈⇏ _ ⟩) eq0 (Eq0NoLeft (Eq0FailedCastR x)) = {!   !}
-  eq0-substc .c .c eq0 (Eq0NoLeft (Eq0NoCasts Eq0Const)) = Eq0NoLeft (Eq0NoCasts Eq0Const)
-  eq0-substc (X x3) (X x4) eq0 (Eq0NoLeft (Eq0NoCasts Eq0Var)) with natEQ x3 Z
-  ... | Inl refl = {!   !}
-  ... | Inr neq = Eq0NoLeft (Eq0NoCasts Eq0Var)
-  eq0-substc .⦇-⦈ .⦇-⦈ eq0 (Eq0NoLeft (Eq0NoCasts Eq0EHole)) = Eq0NoLeft (Eq0NoCasts Eq0EHole)
-  eq0-substc .(·λ[ _ ] _) .(·λ[ _ ] _) eq0 (Eq0NoLeft (Eq0NoCasts (Eq0Lam x))) = {!   !}
-  eq0-substc .(·Λ _) .(·Λ _) eq0 (Eq0NoLeft (Eq0NoCasts (Eq0TLam x))) = {!   !}
-  eq0-substc {d1} {d2} (⦇⌜ d3 ⌟⦈) (⦇⌜ d4 ⌟⦈) eq0 (Eq0NoLeft (Eq0NoCasts (Eq0NEHole x))) = Eq0NoLeft (Eq0NoCasts (Eq0NEHole (eq0-substc _ _ eq0 x)))
-  eq0-substc {d1} {d2} (d3 ∘ d4) (d5 ∘ d6) eq0 (Eq0NoLeft (Eq0NoCasts (Eq0Ap x x₁))) = Eq0NoLeft (Eq0NoCasts (Eq0Ap (eq0-substc _ _ eq0 x) (eq0-substc _ _ eq0 x₁)))
-  eq0-substc {d1} {d2} (d3 < _ >) (d4 < _ >) eq0 (Eq0NoLeft (Eq0NoCasts (Eq0TAp x))) = Eq0NoLeft (Eq0NoCasts (Eq0TAp (eq0-substc _ _ eq0 x)))
+  mutual 
+
+    eq0cn-shift : 
+      ∀ {d1 d2 a n b m} →
+      d1 =0cn d2 → 
+      ↑d a n b m d1 =0cn ↑d a n b m d2
+    eq0cn-shift Eq0Const = Eq0Const
+    eq0cn-shift Eq0Var = Eq0Var
+    eq0cn-shift Eq0EHole = Eq0EHole
+    eq0cn-shift (Eq0Lam x) = Eq0Lam (eq0-shift x)
+    eq0cn-shift (Eq0TLam x) = Eq0TLam (eq0-shift x)
+    eq0cn-shift (Eq0NEHole x) = Eq0NEHole (eq0-shift x)
+    eq0cn-shift (Eq0Ap x x₁) = Eq0Ap (eq0-shift x) (eq0-shift x₁)
+    eq0cn-shift (Eq0TAp x) = Eq0TAp (eq0-shift x)
+
+    eq0cr-shift : 
+      ∀ {d1 d2 a n b m} →
+      d1 =0cr d2 → 
+      ↑d a n b m d1 =0cr ↑d a n b m d2
+    eq0cr-shift (Eq0CastR eq0) = Eq0CastR (eq0cr-shift eq0)
+    eq0cr-shift (Eq0FailedCastR eq0) = Eq0FailedCastR (eq0cr-shift eq0)
+    eq0cr-shift (Eq0NoCasts x) = Eq0NoCasts (eq0cn-shift x)
+
+    eq0-shift : 
+      ∀ {d1 d2 a n b m} →
+      d1 =0c d2 → 
+      ↑d a n b m d1 =0c ↑d a n b m d2
+    eq0-shift (Eq0CastL eq0) = Eq0CastL (eq0-shift eq0)
+    eq0-shift (Eq0FailedCastL eq0) = Eq0FailedCastL (eq0-shift eq0)
+    eq0-shift (Eq0NoLeft x) = Eq0NoLeft (eq0cr-shift x)
+
+  mutual 
+
+    eq0-substcn : 
+      ∀ {d1 d2 n m} →
+      (d3 d4 : ihexp) →
+      d1 =0c d2 →
+      d3 =0cn d4 →
+      (ttSub n m d1 d3) =0cn (ttSub n m d2 d4)
+    eq0-substcn .c .c eq0 Eq0Const = Eq0Const
+    eq0-substcn {n = n} (X y) (X x) eq0 Eq0Var with natEQ x n 
+    ... | Inl refl = {!   !} -- the issue is that these lemmmas don't hold when substituting into a variable. when that happens, who knows what the top constructors of the equation will be, and therefore which kind of equality holds
+    ... | Inr neq = Eq0Var
+    eq0-substcn .⦇-⦈ .⦇-⦈ eq0 Eq0EHole = Eq0EHole
+    eq0-substcn .(·λ[ _ ] _) .(·λ[ _ ] _) eq0 (Eq0Lam x) = Eq0Lam (eq0-substc _ _ eq0 x)
+    eq0-substcn .(·Λ _) .(·Λ _) eq0 (Eq0TLam x) = Eq0TLam (eq0-substc _ _ eq0 x)
+    eq0-substcn .(⦇⌜ _ ⌟⦈) .(⦇⌜ _ ⌟⦈) eq0 (Eq0NEHole x) = Eq0NEHole (eq0-substc _ _ eq0 x)
+    eq0-substcn .(_ ∘ _) .(_ ∘ _) eq0 (Eq0Ap x x₁) = Eq0Ap (eq0-substc _ _ eq0 x) (eq0-substc _ _ eq0 x₁)
+    eq0-substcn .(_ < _ >) .(_ < _ >) eq0 (Eq0TAp x) = Eq0TAp (eq0-substc _ _ eq0 x)
+
+    eq0-substcr : 
+      ∀ {d1 d2 n m} →
+      (d3 d4 : ihexp) →
+      d1 =0c d2 →
+      d3 =0cr d4 →
+      (ttSub n m d1 d3) =0cr (ttSub n m d2 d4)
+    eq0-substcr d3 .(_ ⟨ _ ⇒ _ ⟩) eq0 (Eq0CastR eq0') = Eq0CastR (eq0-substcr _ _ eq0 eq0')
+    eq0-substcr d3 .(_ ⟨ _ ⇒⦇-⦈⇏ _ ⟩) eq0 (Eq0FailedCastR eq0') = Eq0FailedCastR (eq0-substcr _ _ eq0 eq0')
+    eq0-substcr d3 d4 eq0 (Eq0NoCasts x) = Eq0NoCasts (eq0-substcn _ _ eq0 x)
+
+    eq0-substc : 
+      ∀ {d1 d2 n m} →
+      (d3 d4 : ihexp) →
+      d1 =0c d2 →
+      d3 =0c d4 →
+      (ttSub n m d1 d3) =0c (ttSub n m d2 d4)
+    eq0-substc {d1} {d2} .(_ ⟨ _ ⇒ _ ⟩) d4 eq0 (Eq0CastL eq0') = Eq0CastL (eq0-substc _ _ eq0 eq0')
+    eq0-substc {d1} {d2} .(_ ⟨ _ ⇒⦇-⦈⇏ _ ⟩) d4 eq0 (Eq0FailedCastL eq0') = Eq0FailedCastL (eq0-substc _ _ eq0 eq0')
+    eq0-substc d3 .(_ ⟨ _ ⇒ _ ⟩) eq0 (Eq0NoLeft (Eq0CastR x)) = Eq0NoLeft (Eq0CastR (eq0-substcr d3 _ eq0 x))
+    eq0-substc d3 .(_ ⟨ _ ⇒⦇-⦈⇏ _ ⟩) eq0 (Eq0NoLeft (Eq0FailedCastR x)) = Eq0NoLeft (Eq0FailedCastR (eq0-substcr d3 _ eq0 x))
+    eq0-substc .c .c eq0 (Eq0NoLeft (Eq0NoCasts Eq0Const)) = Eq0NoLeft (Eq0NoCasts Eq0Const)
+    eq0-substc {n = n} (X x3) (X x4) eq0 (Eq0NoLeft (Eq0NoCasts Eq0Var)) with natEQ x3 n
+    ... | Inl refl = eq0-shift eq0
+    ... | Inr neq = Eq0NoLeft (Eq0NoCasts Eq0Var)
+    eq0-substc .⦇-⦈ .⦇-⦈ eq0 (Eq0NoLeft (Eq0NoCasts Eq0EHole)) = Eq0NoLeft (Eq0NoCasts Eq0EHole)
+    eq0-substc .(·λ[ _ ] _) .(·λ[ _ ] _) eq0 (Eq0NoLeft (Eq0NoCasts (Eq0Lam x))) = Eq0NoLeft (Eq0NoCasts (Eq0Lam (eq0-substc _ _ eq0 x)))
+    eq0-substc .(·Λ _) .(·Λ _) eq0 (Eq0NoLeft (Eq0NoCasts (Eq0TLam x))) = Eq0NoLeft (Eq0NoCasts (Eq0TLam (eq0-substc _ _ eq0 x)))
+    eq0-substc {d1} {d2} (⦇⌜ d3 ⌟⦈) (⦇⌜ d4 ⌟⦈) eq0 (Eq0NoLeft (Eq0NoCasts (Eq0NEHole x))) = Eq0NoLeft (Eq0NoCasts (Eq0NEHole (eq0-substc _ _ eq0 x)))
+    eq0-substc {d1} {d2} (d3 ∘ d4) (d5 ∘ d6) eq0 (Eq0NoLeft (Eq0NoCasts (Eq0Ap x x₁))) = Eq0NoLeft (Eq0NoCasts (Eq0Ap (eq0-substc _ _ eq0 x) (eq0-substc _ _ eq0 x₁)))
+    eq0-substc {d1} {d2} (d3 < _ >) (d4 < _ >) eq0 (Eq0NoLeft (Eq0NoCasts (Eq0TAp x))) = Eq0NoLeft (Eq0NoCasts (Eq0TAp (eq0-substc _ _ eq0 x)))
 
   eq0-substtc :
     ∀{τ1 τ2} →
@@ -479,4 +539,4 @@ module parametricity2-defs where
   confluence-implies-unique-normal-form {d} {d1} {d2} conf steps1 steps2 final1 final2
     with conf d d1 d2 steps1 steps2
   ... | df , steps1' , step2' rewrite finality* final1 steps1' rewrite finality* final2 step2' = refl
- 
+   
