@@ -157,7 +157,7 @@ module parametricity2-lemmas2 where
     ... | d2' , eq0' , steps , fin = _ , Eq0CastR eq0' , evalctx-compose-ms steps (FHCast FHOuter) (FHCast FHOuter) , fin-forall-lemma fin neq'
     parametricity-onesided-lemma-doublecast-case {τ1 = ·∀ τ1} {τ2 = ·∀ τ2} {τ3 = ·∀ τ3} neq neq' neq'' wt1 (TACast (TACast wt2 (WFForall x₂) (ConsistForall x₃)) x x₁) eq0 v fin
       = _ , Eq0CastR (Eq0CastR eq0) , MSRefl , fin-forall-lemma (fin-forall-lemma fin neq) neq'
-    
+
     parametricity-onesided-lemma-holecast-case : ∀{d1 τ d2 τ1 τ3} →
       τ1 ≠ ⦇-⦈ → τ3 ≠ ⦇-⦈ →
       ∅ ⊢ d1 :: τ →

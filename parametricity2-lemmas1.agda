@@ -182,11 +182,16 @@ module parametricity2-lemmas1 where
       -- and parametricity to show d4 -> final, but d4 has failed cast that never goes away so it's indet
       -- Alternatively, if just showing parametricity22, we have d4 -> final and d4 has a failedcast
 
+  parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin ITTLam ctxout) | .((_ ⟨ _ ⇒ _ ⟩) < _ >) , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0TAp (Eq0NoLeft (Eq0CastR x)))) , eq0e , form = {!   !}
+  parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin ITTLam ctxout) | .((_ ⟨ _ ⇒⦇-⦈⇏ _ ⟩) < _ >) , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0TAp (Eq0NoLeft (Eq0FailedCastR x)))) , eq0e , form = {!   !}
+  
 -- These are the actual interesting cases.
   parametricity21-lemma-ctx {d1 = d1} {d2 = d2} wt1 wt2 eq0 (Step ctxin (ITLam {d1 = d3} {d2 = d4}) ctxout) 
     | ((·λ[ _ ] _) ∘ _) , ε2 , ctxin' , 
     Eq0NoLeft (Eq0NoCasts (Eq0Ap {d4 = d6} (Eq0NoLeft (Eq0NoCasts (Eq0Lam {d2 = d5} x))) x₁)) , eq0e , form with eq0c-ctxout (eq0-substc d3 d5 x₁ x) eq0e ctxout
   ... | (d2out , eqeout , eq0out) = _ , MSStep (Step ctxin' ITLam eqeout) MSRefl , Inl eq0out
-  parametricity21-lemma-ctx {d2 = d2} wt1 wt2 eq0 (Step ctxin ITTLam ctxout) | .(_ < _ >) , ε2 , ctxin' , Eq0NoLeft (Eq0NoCasts (Eq0TAp x)) , eq0e = {!   !}
- 
- 
+  parametricity21-lemma-ctx wt1 wt2 eq0 (Step ctxin (ITTLam {d = d1}) ctxout)
+    | .(·Λ _ < _ >) , ε2 , ctxin' , 
+    Eq0NoLeft (Eq0NoCasts (Eq0TAp (Eq0NoLeft (Eq0NoCasts (Eq0TLam {d2 = d2} x))))) , eq0e , form with eq0c-ctxout (eq0-substtc d1 d2 x) eq0e ctxout
+  ... | (d2out , eqeout , eq0out) = _ , MSStep (Step ctxin' ITTLam eqeout) MSRefl , Inl eq0out
+

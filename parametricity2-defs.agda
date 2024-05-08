@@ -323,7 +323,12 @@ module parametricity2-defs where
   eq0-substc {d1} {d2} (d3 ∘ d4) (d5 ∘ d6) eq0 (Eq0NoLeft (Eq0NoCasts (Eq0Ap x x₁))) = Eq0NoLeft (Eq0NoCasts (Eq0Ap (eq0-substc _ _ eq0 x) (eq0-substc _ _ eq0 x₁)))
   eq0-substc {d1} {d2} (d3 < _ >) (d4 < _ >) eq0 (Eq0NoLeft (Eq0NoCasts (Eq0TAp x))) = Eq0NoLeft (Eq0NoCasts (Eq0TAp (eq0-substc _ _ eq0 x)))
 
-
+  eq0-substtc :
+    ∀{τ1 τ2} →
+    (d1 d2 : ihexp) →
+    d1 =0c d2 →
+    TtSub Z τ1 d1 =0c TtSub Z τ2 d2
+  eq0-substtc = {!   !}
 
   eq-ctx-eq : ∀{ε d d1 d2} →
     d1 == ε ⟦ d ⟧ → d2 == ε ⟦ d ⟧ →
