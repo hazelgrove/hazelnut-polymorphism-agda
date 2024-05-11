@@ -302,93 +302,124 @@ module parametricity2-defs where
   cast-steps-preserve-=0c (ITGround x) eq0 = Eq0CastL (Eq0CastL eq0)
   cast-steps-preserve-=0c (ITExpand x) eq0 = Eq0CastL (Eq0CastL eq0)
 
-  mutual 
+  add-cast-r : (d1 d2 : ihexp) → (τ1 τ2 : htyp) → d1 =0c d2 → d1 =0c (d2 ⟨ τ1 ⇒ τ2 ⟩)
+  add-cast-r .(_ ⟨ _ ⇒ _ ⟩) d2 τ1 τ2 (Eq0CastL eq0) = Eq0CastL (add-cast-r _ d2 τ1 τ2 eq0)
+  add-cast-r .(_ ⟨ _ ⇒⦇-⦈⇏ _ ⟩) d2 τ1 τ2 (Eq0FailedCastL eq0) = Eq0FailedCastL (add-cast-r _ d2 τ1 τ2 eq0)
+  add-cast-r d1 d2 τ1 τ2 (Eq0NoLeft x) = Eq0NoLeft (Eq0CastR x)
 
-    eq0cn-shift : 
-      ∀ {d1 d2 a n b m} →
-      d1 =0cn d2 → 
-      ↑d a n b m d1 =0cn ↑d a n b m d2
-    eq0cn-shift Eq0Const = Eq0Const
-    eq0cn-shift Eq0Var = Eq0Var
-    eq0cn-shift Eq0EHole = Eq0EHole
-    eq0cn-shift (Eq0Lam x) = Eq0Lam (eq0-shift x)
-    eq0cn-shift (Eq0TLam x) = Eq0TLam (eq0-shift x)
-    eq0cn-shift (Eq0NEHole x) = Eq0NEHole (eq0-shift x)
-    eq0cn-shift (Eq0Ap x x₁) = Eq0Ap (eq0-shift x) (eq0-shift x₁)
-    eq0cn-shift (Eq0TAp x) = Eq0TAp (eq0-shift x)
+  add-failed-cast-r : (d1 d2 : ihexp) → (τ1 τ2 : htyp) → d1 =0c d2 → d1 =0c (d2 ⟨ τ1 ⇒⦇-⦈⇏ τ2 ⟩)
+  add-failed-cast-r .(_ ⟨ _ ⇒ _ ⟩) d2 τ1 τ2 (Eq0CastL eq0) = Eq0CastL (add-failed-cast-r _ d2 τ1 τ2 eq0)
+  add-failed-cast-r .(_ ⟨ _ ⇒⦇-⦈⇏ _ ⟩) d2 τ1 τ2 (Eq0FailedCastL eq0) = Eq0FailedCastL (add-failed-cast-r _ d2 τ1 τ2 eq0)
+  add-failed-cast-r d1 d2 τ1 τ2 (Eq0NoLeft x) = Eq0NoLeft (Eq0FailedCastR x)
 
-    eq0cr-shift : 
-      ∀ {d1 d2 a n b m} →
-      d1 =0cr d2 → 
-      ↑d a n b m d1 =0cr ↑d a n b m d2
-    eq0cr-shift (Eq0CastR eq0) = Eq0CastR (eq0cr-shift eq0)
-    eq0cr-shift (Eq0FailedCastR eq0) = Eq0FailedCastR (eq0cr-shift eq0)
-    eq0cr-shift (Eq0NoCasts x) = Eq0NoCasts (eq0cn-shift x)
+  data _=0c'_ : (d1 d2 : ihexp) → Set where 
+    Eq0CastL : ∀{d1 d2 τ1 τ2} → d1 =0c' d2 → (d1 ⟨ τ1 ⇒ τ2 ⟩) =0c' d2
+    Eq0FailedCastL : ∀{d1 d2 τ1 τ2} → d1 =0c' d2 → (d1 ⟨ τ1 ⇒⦇-⦈⇏ τ2 ⟩) =0c' d2
+    Eq0CastR : ∀{d1 d2 τ1 τ2} → d1 =0c' d2 → d1 =0c' (d2 ⟨ τ1 ⇒ τ2 ⟩)
+    Eq0FailedCastR : ∀{d1 d2 τ1 τ2} → d1 =0c' d2 → d1 =0c' (d2 ⟨ τ1 ⇒⦇-⦈⇏ τ2 ⟩)
+    Eq0Const : c =0c' c
+    Eq0Var : ∀{x} → (X x) =0c' (X x) 
+    Eq0EHole : ⦇-⦈ =0c' ⦇-⦈
+    Eq0Lam : ∀{d1 d2 τ1 τ2} → d1 =0c' d2 → (·λ[ τ1 ] d1) =0c' (·λ[ τ2 ] d2)
+    Eq0TLam : ∀{d1 d2} → d1 =0c' d2 → (·Λ d1) =0c' (·Λ d2)
+    Eq0NEHole : ∀{d1 d2} → d1 =0c' d2 →  ⦇⌜ d1 ⌟⦈ =0c' ⦇⌜ d2 ⌟⦈
+    Eq0Ap :  ∀{d1 d2 d3 d4} → d1 =0c' d3 →  d2 =0c' d4 →  (d1 ∘ d2) =0c' (d3 ∘ d4)
+    Eq0TAp : ∀{d1 d2 τ1 τ2} → d1 =0c' d2 → (d1 < τ1 >) =0c' (d2 < τ2 >)
 
-    eq0-shift : 
-      ∀ {d1 d2 a n b m} →
-      d1 =0c d2 → 
-      ↑d a n b m d1 =0c ↑d a n b m d2
-    eq0-shift (Eq0CastL eq0) = Eq0CastL (eq0-shift eq0)
-    eq0-shift (Eq0FailedCastL eq0) = Eq0FailedCastL (eq0-shift eq0)
-    eq0-shift (Eq0NoLeft x) = Eq0NoLeft (eq0cr-shift x)
+  =0c-equiv : {d1 d2 : ihexp} → d1 =0c d2 → d1 =0c' d2
+  =0c-equiv (Eq0CastL eq0) = Eq0CastL (=0c-equiv eq0)
+  =0c-equiv (Eq0FailedCastL eq0) = Eq0FailedCastL (=0c-equiv eq0)
+  =0c-equiv (Eq0NoLeft (Eq0CastR x)) = Eq0CastR (=0c-equiv (Eq0NoLeft x))
+  =0c-equiv (Eq0NoLeft (Eq0FailedCastR x)) = Eq0FailedCastR (=0c-equiv (Eq0NoLeft x))
+  =0c-equiv (Eq0NoLeft (Eq0NoCasts Eq0Const)) = Eq0Const
+  =0c-equiv (Eq0NoLeft (Eq0NoCasts Eq0Var)) = Eq0Var
+  =0c-equiv (Eq0NoLeft (Eq0NoCasts Eq0EHole)) = Eq0EHole
+  =0c-equiv (Eq0NoLeft (Eq0NoCasts (Eq0Lam x))) = Eq0Lam (=0c-equiv x)
+  =0c-equiv (Eq0NoLeft (Eq0NoCasts (Eq0TLam x))) = Eq0TLam (=0c-equiv x)
+  =0c-equiv (Eq0NoLeft (Eq0NoCasts (Eq0NEHole x))) = Eq0NEHole (=0c-equiv x)
+  =0c-equiv (Eq0NoLeft (Eq0NoCasts (Eq0Ap x x₁))) = Eq0Ap (=0c-equiv x) (=0c-equiv x₁)
+  =0c-equiv (Eq0NoLeft (Eq0NoCasts (Eq0TAp x))) = Eq0TAp (=0c-equiv x)
 
-  mutual 
+  =0c'-equiv : {d1 d2 : ihexp} → d1 =0c' d2 → d1 =0c d2
+  =0c'-equiv (Eq0CastL eq0) = Eq0CastL (=0c'-equiv eq0)
+  =0c'-equiv (Eq0FailedCastL eq0) = Eq0FailedCastL (=0c'-equiv eq0)
+  =0c'-equiv (Eq0CastR eq0) = add-cast-r _ _ _ _ (=0c'-equiv eq0)
+  =0c'-equiv (Eq0FailedCastR eq0) = add-failed-cast-r _ _ _ _ (=0c'-equiv eq0)
+  =0c'-equiv Eq0Const = Eq0NoLeft (Eq0NoCasts Eq0Const)
+  =0c'-equiv Eq0Var = Eq0NoLeft (Eq0NoCasts Eq0Var)
+  =0c'-equiv Eq0EHole = Eq0NoLeft (Eq0NoCasts Eq0EHole)
+  =0c'-equiv (Eq0Lam eq0) = Eq0NoLeft (Eq0NoCasts (Eq0Lam (=0c'-equiv eq0)))
+  =0c'-equiv (Eq0TLam eq0) = Eq0NoLeft (Eq0NoCasts (Eq0TLam (=0c'-equiv eq0)))
+  =0c'-equiv (Eq0NEHole eq0) = Eq0NoLeft (Eq0NoCasts (Eq0NEHole (=0c'-equiv eq0)))
+  =0c'-equiv (Eq0Ap eq0 eq1) = Eq0NoLeft (Eq0NoCasts (Eq0Ap (=0c'-equiv eq0) (=0c'-equiv eq1)))
+  =0c'-equiv (Eq0TAp eq0) = Eq0NoLeft (Eq0NoCasts (Eq0TAp (=0c'-equiv eq0)))
 
-    eq0-substcn : 
-      ∀ {d1 d2 n m} →
-      (d3 d4 : ihexp) →
-      d1 =0c d2 →
-      d3 =0cn d4 →
-      (ttSub n m d1 d3) =0cn (ttSub n m d2 d4)
-    eq0-substcn .c .c eq0 Eq0Const = Eq0Const
-    eq0-substcn {n = n} (X y) (X x) eq0 Eq0Var with natEQ x n 
-    ... | Inl refl = {!   !} -- the issue is that these lemmmas don't hold when substituting into a variable. when that happens, who knows what the top constructors of the equation will be, and therefore which kind of equality holds
-    ... | Inr neq = Eq0Var
-    eq0-substcn .⦇-⦈ .⦇-⦈ eq0 Eq0EHole = Eq0EHole
-    eq0-substcn .(·λ[ _ ] _) .(·λ[ _ ] _) eq0 (Eq0Lam x) = Eq0Lam (eq0-substc _ _ eq0 x)
-    eq0-substcn .(·Λ _) .(·Λ _) eq0 (Eq0TLam x) = Eq0TLam (eq0-substc _ _ eq0 x)
-    eq0-substcn .(⦇⌜ _ ⌟⦈) .(⦇⌜ _ ⌟⦈) eq0 (Eq0NEHole x) = Eq0NEHole (eq0-substc _ _ eq0 x)
-    eq0-substcn .(_ ∘ _) .(_ ∘ _) eq0 (Eq0Ap x x₁) = Eq0Ap (eq0-substc _ _ eq0 x) (eq0-substc _ _ eq0 x₁)
-    eq0-substcn .(_ < _ >) .(_ < _ >) eq0 (Eq0TAp x) = Eq0TAp (eq0-substc _ _ eq0 x)
+  eq0c'-shift : 
+    ∀ {d1 d2 a n b m} →
+    d1 =0c' d2 → 
+    ↑d a n b m d1 =0c' ↑d a n b m d2
+  eq0c'-shift (Eq0CastL eq0) = Eq0CastL (eq0c'-shift eq0)
+  eq0c'-shift (Eq0FailedCastL eq0) = Eq0FailedCastL (eq0c'-shift eq0)
+  eq0c'-shift (Eq0CastR eq0) = Eq0CastR (eq0c'-shift eq0)
+  eq0c'-shift (Eq0FailedCastR eq0) = Eq0FailedCastR (eq0c'-shift eq0)
+  eq0c'-shift Eq0Const = Eq0Const
+  eq0c'-shift Eq0Var = Eq0Var
+  eq0c'-shift Eq0EHole = Eq0EHole
+  eq0c'-shift (Eq0Lam eq0) = Eq0Lam (eq0c'-shift eq0)
+  eq0c'-shift (Eq0TLam eq0) = Eq0TLam (eq0c'-shift eq0)
+  eq0c'-shift (Eq0NEHole eq0) = Eq0NEHole (eq0c'-shift eq0)
+  eq0c'-shift (Eq0Ap eq0 eq1) = Eq0Ap (eq0c'-shift eq0) (eq0c'-shift eq1)
+  eq0c'-shift (Eq0TAp eq0) = Eq0TAp (eq0c'-shift eq0)
 
-    eq0-substcr : 
-      ∀ {d1 d2 n m} →
-      (d3 d4 : ihexp) →
-      d1 =0c d2 →
-      d3 =0cr d4 →
-      (ttSub n m d1 d3) =0cr (ttSub n m d2 d4)
-    eq0-substcr d3 .(_ ⟨ _ ⇒ _ ⟩) eq0 (Eq0CastR eq0') = Eq0CastR (eq0-substcr _ _ eq0 eq0')
-    eq0-substcr d3 .(_ ⟨ _ ⇒⦇-⦈⇏ _ ⟩) eq0 (Eq0FailedCastR eq0') = Eq0FailedCastR (eq0-substcr _ _ eq0 eq0')
-    eq0-substcr d3 d4 eq0 (Eq0NoCasts x) = Eq0NoCasts (eq0-substcn _ _ eq0 x)
+  eq0c'-ttSub : 
+    ∀ {d1 d2 d3 d4 n m} →
+    d1 =0c' d2 →
+    d3 =0c' d4 →
+    (ttSub n m d1 d3) =0c' (ttSub n m d2 d4)
+  eq0c'-ttSub eq0 (Eq0CastL eq0') = Eq0CastL (eq0c'-ttSub eq0 eq0')
+  eq0c'-ttSub eq0 (Eq0FailedCastL eq0') = Eq0FailedCastL (eq0c'-ttSub eq0 eq0')
+  eq0c'-ttSub eq0 (Eq0CastR eq0') = Eq0CastR (eq0c'-ttSub eq0 eq0')
+  eq0c'-ttSub eq0 (Eq0FailedCastR eq0') = Eq0FailedCastR (eq0c'-ttSub eq0 eq0')
+  eq0c'-ttSub eq0 Eq0Const = Eq0Const
+  eq0c'-ttSub eq0 Eq0EHole = Eq0EHole
+  eq0c'-ttSub eq0 (Eq0Lam eq0') = Eq0Lam (eq0c'-ttSub eq0 eq0')
+  eq0c'-ttSub eq0 (Eq0TLam eq0') = Eq0TLam (eq0c'-ttSub eq0 eq0')
+  eq0c'-ttSub eq0 (Eq0NEHole eq0') = Eq0NEHole (eq0c'-ttSub eq0 eq0')
+  eq0c'-ttSub eq0 (Eq0Ap eq0' eq0'') = Eq0Ap (eq0c'-ttSub eq0 eq0') (eq0c'-ttSub eq0 eq0'')
+  eq0c'-ttSub eq0 (Eq0TAp eq0') = Eq0TAp (eq0c'-ttSub eq0 eq0')
+  eq0c'-ttSub {d3 = (X x)} {d4 = (.X x)} {n = n} eq0 Eq0Var with natEQ x n 
+  ... | Inl refl = eq0c'-shift eq0 
+  ... | Inr neq = Eq0Var
 
-    eq0-substc : 
-      ∀ {d1 d2 n m} →
-      (d3 d4 : ihexp) →
-      d1 =0c d2 →
-      d3 =0c d4 →
-      (ttSub n m d1 d3) =0c (ttSub n m d2 d4)
-    eq0-substc {d1} {d2} .(_ ⟨ _ ⇒ _ ⟩) d4 eq0 (Eq0CastL eq0') = Eq0CastL (eq0-substc _ _ eq0 eq0')
-    eq0-substc {d1} {d2} .(_ ⟨ _ ⇒⦇-⦈⇏ _ ⟩) d4 eq0 (Eq0FailedCastL eq0') = Eq0FailedCastL (eq0-substc _ _ eq0 eq0')
-    eq0-substc d3 .(_ ⟨ _ ⇒ _ ⟩) eq0 (Eq0NoLeft (Eq0CastR x)) = Eq0NoLeft (Eq0CastR (eq0-substcr d3 _ eq0 x))
-    eq0-substc d3 .(_ ⟨ _ ⇒⦇-⦈⇏ _ ⟩) eq0 (Eq0NoLeft (Eq0FailedCastR x)) = Eq0NoLeft (Eq0FailedCastR (eq0-substcr d3 _ eq0 x))
-    eq0-substc .c .c eq0 (Eq0NoLeft (Eq0NoCasts Eq0Const)) = Eq0NoLeft (Eq0NoCasts Eq0Const)
-    eq0-substc {n = n} (X x3) (X x4) eq0 (Eq0NoLeft (Eq0NoCasts Eq0Var)) with natEQ x3 n
-    ... | Inl refl = eq0-shift eq0
-    ... | Inr neq = Eq0NoLeft (Eq0NoCasts Eq0Var)
-    eq0-substc .⦇-⦈ .⦇-⦈ eq0 (Eq0NoLeft (Eq0NoCasts Eq0EHole)) = Eq0NoLeft (Eq0NoCasts Eq0EHole)
-    eq0-substc .(·λ[ _ ] _) .(·λ[ _ ] _) eq0 (Eq0NoLeft (Eq0NoCasts (Eq0Lam x))) = Eq0NoLeft (Eq0NoCasts (Eq0Lam (eq0-substc _ _ eq0 x)))
-    eq0-substc .(·Λ _) .(·Λ _) eq0 (Eq0NoLeft (Eq0NoCasts (Eq0TLam x))) = Eq0NoLeft (Eq0NoCasts (Eq0TLam (eq0-substc _ _ eq0 x)))
-    eq0-substc {d1} {d2} (⦇⌜ d3 ⌟⦈) (⦇⌜ d4 ⌟⦈) eq0 (Eq0NoLeft (Eq0NoCasts (Eq0NEHole x))) = Eq0NoLeft (Eq0NoCasts (Eq0NEHole (eq0-substc _ _ eq0 x)))
-    eq0-substc {d1} {d2} (d3 ∘ d4) (d5 ∘ d6) eq0 (Eq0NoLeft (Eq0NoCasts (Eq0Ap x x₁))) = Eq0NoLeft (Eq0NoCasts (Eq0Ap (eq0-substc _ _ eq0 x) (eq0-substc _ _ eq0 x₁)))
-    eq0-substc {d1} {d2} (d3 < _ >) (d4 < _ >) eq0 (Eq0NoLeft (Eq0NoCasts (Eq0TAp x))) = Eq0NoLeft (Eq0NoCasts (Eq0TAp (eq0-substc _ _ eq0 x)))
+  eq0c'-TtSub :
+    ∀{τ1 τ2 d1 d2 n} →
+    d1 =0c' d2 →
+    TtSub n τ1 d1 =0c' TtSub n τ2 d2
+  eq0c'-TtSub (Eq0CastL eq0) = Eq0CastL (eq0c'-TtSub eq0)
+  eq0c'-TtSub (Eq0FailedCastL eq0) = Eq0FailedCastL (eq0c'-TtSub eq0)
+  eq0c'-TtSub (Eq0CastR eq0) = Eq0CastR (eq0c'-TtSub eq0)
+  eq0c'-TtSub (Eq0FailedCastR eq0) = Eq0FailedCastR (eq0c'-TtSub eq0)
+  eq0c'-TtSub Eq0Const = Eq0Const
+  eq0c'-TtSub Eq0Var = Eq0Var
+  eq0c'-TtSub Eq0EHole = Eq0EHole
+  eq0c'-TtSub (Eq0Lam eq0) = Eq0Lam (eq0c'-TtSub eq0)
+  eq0c'-TtSub (Eq0TLam eq0) = Eq0TLam (eq0c'-TtSub eq0)
+  eq0c'-TtSub (Eq0NEHole eq0) = Eq0NEHole (eq0c'-TtSub eq0)
+  eq0c'-TtSub (Eq0Ap eq0 eq1) = Eq0Ap (eq0c'-TtSub eq0) (eq0c'-TtSub eq1)
+  eq0c'-TtSub (Eq0TAp eq0) = Eq0TAp (eq0c'-TtSub eq0)
 
-  eq0-substtc :
-    ∀{τ1 τ2} →
-    (d1 d2 : ihexp) →
+  eq0c-ttSub : 
+    ∀ {d1 d2 d3 d4 n m} →
     d1 =0c d2 →
-    TtSub Z τ1 d1 =0c TtSub Z τ2 d2
-  eq0-substtc = {!   !}
+    d3 =0c d4 →
+    (ttSub n m d1 d3) =0c (ttSub n m d2 d4)
+  eq0c-ttSub eq0 eq0' = =0c'-equiv (eq0c'-ttSub (=0c-equiv eq0) (=0c-equiv eq0')) 
+
+  eq0-TtSub :
+    ∀{τ1 τ2 d1 d2 n} →
+    d1 =0c d2 →
+    TtSub n τ1 d1 =0c TtSub n τ2 d2
+  eq0-TtSub eq0 = =0c'-equiv (eq0c'-TtSub (=0c-equiv eq0))
 
   eq-ctx-eq : ∀{ε d d1 d2} →
     d1 == ε ⟦ d ⟧ → d2 == ε ⟦ d ⟧ →
@@ -528,7 +559,7 @@ module parametricity2-defs where
 
   confluence : Set
   confluence = (d dm1 dm2 : ihexp) → d ↦* dm1 → d ↦* dm2 → Σ[ df ∈ ihexp ](dm1 ↦* df × dm2 ↦* df)
-
+    
   confluence-implies-unique-normal-form : ∀{d d1 d2} →
     confluence →
     d ↦* d1 →
@@ -539,4 +570,4 @@ module parametricity2-defs where
   confluence-implies-unique-normal-form {d} {d1} {d2} conf steps1 steps2 final1 final2
     with conf d d1 d2 steps1 steps2
   ... | df , steps1' , step2' rewrite finality* final1 steps1' rewrite finality* final2 step2' = refl
-   
+    
